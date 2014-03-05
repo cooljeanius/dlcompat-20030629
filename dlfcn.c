@@ -1,9 +1,9 @@
 /*
 Copyright (c) 2002 Jorge Acereda  <jacereda@users.sourceforge.net> &
                    Peter O'Gorman <ogorman@users.sourceforge.net>
-                   
+
 Portions may be copyright others, see the AUTHORS file included with this
-distribution.                  
+distribution.
 
 Maintained by Peter O'Gorman <ogorman@users.sourceforge.net>
 
@@ -284,7 +284,7 @@ static const char *searchList()
 	if (!stdpath)
 		stdpath = "/usr/local/lib:/lib:/usr/lib";
 	if (!buf)
-	{	
+	{
 		buf_size = strlen(ldlp) + strlen(dyldlp) + strlen(stdpath) + 4;
 		buf = malloc(buf_size);
 		snprintf(buf, buf_size, "%s%s%s%s%s%c", dyldlp, (dyldlp[0] ? ":" : ""), ldlp, (ldlp[0] ? ":" : ""),
@@ -352,7 +352,7 @@ static const char *getFullPath(int i, const char *file)
 }
 
 /* Given a file name, try to determine the full path for that file. Starts
- * its search in the current directory, and then tries all paths in the 
+ * its search in the current directory, and then tries all paths in the
  * search list in the order they are specified there.
  */
 static const struct stat *findFile(const char *file, const char **fullPath)
@@ -429,10 +429,11 @@ static struct dlstatus *allocStatus()
 	struct dlstatus *dls;
 #ifdef REUSE_STATUS
 	dls = stqueue;
-	while (dls && dls->module)
+	while (dls && dls->module) {
 		dls = dls->next;
+	}
 	if (!dls)
-#endif
+#endif /* REUSE_STATUS */
 		dls = malloc(sizeof(*dls));
 	dls->flags = 0;
 	return dls;
@@ -442,8 +443,9 @@ static int promoteLocalToGlobal(struct dlstatus *dls)
 {
 	static int (*p) (NSModule module) = 0;
 	debug("promoting");
-	if (!p)
+	if (!p) {
 		_dyld_func_lookup("__dyld_NSMakePrivateModulePublic", (unsigned long *)&p);
+	}
 	return (dls->module == MAGIC_DYLIB_MOD) || (p && p(dls->module));
 }
 
@@ -650,9 +652,9 @@ static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetErr
 			else
 			{
 				if (savedErrorStr)
-					free((char*)savedErrorStr);			
+					free((char*)savedErrorStr);
 				savedErrorStr = malloc(256);
-				snprintf((char*)savedErrorStr, 256, "Symbol \"%s\" not in global context",symbol);	
+				snprintf((char*)savedErrorStr, 256, "Symbol \"%s\" not in global context",symbol);
 			}
 		}
 	}
@@ -800,18 +802,19 @@ static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, in
 static void dlcompat_init_func(void)
 {
 	static int inited = 0;
-	if (!inited)
-	{
+	if (!inited) {
 		inited = 1;
 		_dyld_func_lookup("__dyld_NSAddImage", (unsigned long *)&dyld_NSAddImage);
 		_dyld_func_lookup("__dyld_NSIsSymbolNameDefinedInImage",
 						  (unsigned long *)&dyld_NSIsSymbolNameDefinedInImage);
 		_dyld_func_lookup("__dyld_NSLookupSymbolInImage", (unsigned long *)&dyld_NSLookupSymbolInImage);
-		if (pthread_mutex_init(&dlcompat_mutex, NULL))
+		if (pthread_mutex_init(&dlcompat_mutex, NULL)) {
 			exit(1);
-		if (pthread_key_create(&dlerror_key, &dlerrorfree))
+		}
+		if (pthread_key_create(&dlerror_key, &dlerrorfree)) {
 			exit(1);
-		/* And be neat and tidy and clean up after ourselves */	
+		}
+		/* And be neat and tidy and clean up after ourselves */
 		atexit(dlcompat_cleanup);
 	}
 }
@@ -855,7 +858,7 @@ static void dlerrorfree(void *data)
 /* We kind of want a recursive lock here, but meet a little trouble
  * because they are not available pre OS X 10.2, so we fake it
  * using thread specific storage to keep a lock count
- */ 
+ */
 static inline void dolock(void)
 {
 	int err = 0;
@@ -874,7 +877,7 @@ static inline void dolock(void)
 	}
 	if (!tss->lockcnt)
 		err = pthread_mutex_lock(&dlcompat_mutex);
-	tss->lockcnt = tss->lockcnt +1;	
+	tss->lockcnt = tss->lockcnt +1;
 	if (err)
 		exit(err);
 }
@@ -929,7 +932,7 @@ void *dlopen(const char *path, int mode)
 		goto dlopenerror;
 	}
 	dls = loadModule(fullPath, sbuf, mode);
-	
+
   dlopenok:
 	dounlock();
 	return (void *)dls;
@@ -982,7 +985,7 @@ static void *dlsym_prepend_underscore_intern(void *handle, const char *symbol)
  *	A quick and easy way for porting packages which call dlsym(handle,"sym")
  *	If the porter adds -Ddlsym=dlsym_prepend_underscore to the CFLAGS then
  *	this function will be called, and will add the required underscore.
- *	
+ *
  *	Note that I haven't figured out yet which should be "standard", prepend
  *	the underscore always, or not at all. These global functions need to go away
  *	for opendarwin.
@@ -1064,7 +1067,7 @@ int dlclose(void *handle)
 		error("module already closed");
 		goto dlcloseerror;
 	}
-	
+
 	if (dls->refs == 1)
 	{
 		unsigned long options = 0;
@@ -1102,7 +1105,7 @@ int dlclose(void *handle)
 		dls->refs--;
 		dls->module = 0;
 		/* Note: the dlstatus struct dls is neither removed from the list
-		 * nor is the memory it occupies freed. This shouldn't pose a 
+		 * nor is the memory it occupies freed. This shouldn't pose a
 		 * problem in mostly all cases, though.
 		 */
 	}
@@ -1122,7 +1125,7 @@ const char *dlerror(void)
 	tss = pthread_getspecific(dlerror_key);
 	if (tss->errset == 0)
 		return 0;
-	tss->errset = 0;	
+	tss->errset = 0;
 	return (err_str );
 }
 
@@ -1273,13 +1276,13 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 /*
  * Implement the dlfunc() interface, which behaves exactly the same as
  * dlsym() except that it returns a function pointer instead of a data
- * pointer.  This can be used by applications to avoid compiler warnings
+ * pointer. This can be used by applications to avoid compiler warnings
  * about undefined behavior, and is intended as prior art for future
- * POSIX standardization.  This function requires that all pointer types
+ * POSIX standardization. This function requires that all pointer types
  * have the same representation, which is true on all platforms FreeBSD
  * runs on, but is not guaranteed by the C standard.
  */
-#if 0 
+#if 0 || __FreeBSD__ || __APPLE__
 dlfunc_t dlfunc(void * dl_restrict handle, const char * dl_restrict symbol)
 {
 	union
@@ -1308,4 +1311,6 @@ dlfunc_t dlfunc(void * dl_restrict handle, const char * dl_restrict symbol)
 	dounlock();
 	return NULL;
 }
-#endif
+#endif /* 0 || __FreeBSD__ || __APPLE__ */
+
+/* EOF */

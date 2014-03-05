@@ -33,6 +33,7 @@ exec_prefix = @exec_prefix@
 mandir = @mandir@
 includedir = @includedir@
 libdir = @libdir@
+datarootdir = @datarootdir@
 DEBUG=0
 CC=@CC@
 OPT=@OPT@
@@ -52,7 +53,7 @@ DESTDIR=
 
 DISTFILES= README \
 	configure \
-	configure.in \
+	configure.ac \
 	dlfcn.c \
 	dlfcn_simple.c \
 	dlfcn.h \
@@ -70,8 +71,8 @@ OBJS = dlfcn.o
 
 all: libdl.a libdl.dylib dlopen.3
 
-configure: configure.in
-	autoconf
+configure: configure.ac
+	autoconf --force --warnings=all
 
 dist: $(DISTFILES)
 	tar -cvf dlcompat-$(VERSION).tar $(DISTFILES)

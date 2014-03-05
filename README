@@ -5,7 +5,7 @@ This is dlcompat, a small library that emulates the dlopen()
 interface on top of Darwin's dyld API.
 
 dlcompat allows loading a ".dylib" library (as long as the RTLD_LOCAL 
-flag isn't passed to dlopen()). It can be configured to yield a warning 
+flag is NOT passed to dlopen()). It can be configured to yield a warning 
 when trying to close it (dynamic libraries cannot currently be unloaded).
 
 It automatically searches for modules in several directories when no 
@@ -61,7 +61,7 @@ on calls to dlsym then type:
 Usage
 -------
 Software that uses GNU autoconf will likely check for a library called
-libdl, that's why I named it that way. For software that doesn't find
+libdl, that is why I named it that way. For software that does NOT find
 the library on its own, you must add a '-ldl' to the appropriate
 Makefile (or environment) variable, usually LIBS.
 
@@ -74,8 +74,8 @@ Notes
 If you are writing new software and plan to have Mac OX X compatibility you
 should look at the dyld api's in /usr/include/mach-o/dyld.h, rather than
 using dlcompat, using the native api's is the supported method of loading
-dynamically on Mac OS X, if you want an small example, look at dlfcn_simple.c,
-which should help get you started.
+dynamically on Mac OS X, if you want an small example, look at
+dlfcn_simple.c, which should help get you started.
 
 As of this version the functions in dlcompat should all be thread safe.
 
@@ -85,10 +85,11 @@ You can always get the latest version from opendarwin cvs:
   cvs -z3 -d :pserver:anonymous@anoncvs.opendarwin.org:/cvs/od \
                co -d dlcompat proj/dlcompat
                
-But remember that you'll have to run autoconf to generate the configure script.
+But remember that you will have to run autoconf to generate the configure
+script.
 
-It is hoped that this library will be useful, and as bug free as possible, if you find
-any bugs please let us know about them so they can be fixed.
+It is hoped that this library will be useful, and as bug free as possible,
+if you find any bugs please let us know about them so they can be fixed.
 
 Please send bug reports to Peter O'Gorman <ogorman@users.sourceforge.net>
 
