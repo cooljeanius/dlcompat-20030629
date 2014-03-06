@@ -1,0 +1,5 @@
+See ChangeLog
+
+The version number, 20030629, has had periods inserted into it, so it is
+now 2003.06.29 just as gnits strictness requires. This also makes it more
+clear that is a date.

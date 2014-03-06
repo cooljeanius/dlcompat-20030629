@@ -6,7 +6,7 @@ dnl#                                               -*- Autoconf -*-
 # needed. Now it does more checks.
 
 AC_PREREQ([2.69])
-AC_INIT([dlcompat],[20030629],[ogorman@users.sourceforge.net])
+AC_INIT([dlcompat],[2003.06.29],[ogorman@users.sourceforge.net])
 AC_CONFIG_SRCDIR([dlfcn.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_LIBOBJ_DIR([.])
@@ -18,7 +18,7 @@ OPT=-O2
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([test])
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([gnits])
 AM_MAINTAINER_MODE
 
 # Checks for programs.
