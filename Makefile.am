@@ -91,6 +91,9 @@ dist-local: $(DISTFILES)
 	rm -rf dlcompat-$(VERSION)
 .PHONY: dist-local
 
+install-exec-local: install-dlcompat
+.PHONY: install-exec-local
+
 install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
@@ -104,6 +107,9 @@ man_MANS = dlopen.3 dladdr.3
 
 dlopen.3: dlopen.3.in
 	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < dlopen.3.in > dlopen.3
+
+install-data-local: install-my-manpage
+.PHONY: install-data-local
 
 install-my-manpage: dlopen.3
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(mandir)/man3/

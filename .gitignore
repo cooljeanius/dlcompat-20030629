@@ -17,3 +17,4 @@ dlopen.3
 stamp-*
 *.tar.gz
 *deps/*.*o
+*.dSYM

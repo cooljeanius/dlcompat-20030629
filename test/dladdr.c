@@ -4,6 +4,7 @@
 #include "dlfcn.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> /* for strcmp() */
 #include <mach-o/dyld.h>
 
 int main(int argc, const char* argv[])

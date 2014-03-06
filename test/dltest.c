@@ -34,24 +34,10 @@
 
 typedef void (*dlModuleTestFn) (int number);
 
-int test_one ();
-int test_two ();
-int test_three ();
-
-int main (int argc, char ** argv)
-{
-	if (argc == 1) return test_one ();
-
-	if (strcmp (argv[1], "-3") == 0) {
-		return test_three ();
-	}
-
-	if (strcmp (argv[1], "-2") == 0) {
-		return test_two ();
-	}
-
-	return test_one ();
-}
+extern int test_one (void);
+extern int test_two (void);
+extern int test_three (void);
+extern void * try_open (const char * f1, const char * f2, const char * f3);
 
 int test_one ()
 {
@@ -418,6 +404,21 @@ int test_three ()
   fprintf (stderr, "\n");
 
   return 0;
+}
+
+int main (int argc, char ** argv)
+{
+	if (argc == 1) return test_one ();
+
+	if (strcmp (argv[1], "-3") == 0) {
+		return test_three ();
+	}
+
+	if (strcmp (argv[1], "-2") == 0) {
+		return test_two ();
+	}
+
+	return test_one ();
 }
 
 /* EOF */

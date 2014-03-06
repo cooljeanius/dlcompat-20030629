@@ -110,11 +110,12 @@ POST_UNINSTALL = :
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in $(srcdir)/Makefile.orig.in error.c \
-	progname.c realloc.c error.h malloc.c lookupDyldFunction.c \
-	_dyld_func_lookup.c depcomp $(include_HEADERS) \
-	$(noinst_HEADERS) AUTHORS ChangeLog README TODO ar-lib compile \
-	install-sh missing
+	$(srcdir)/config.h.in $(srcdir)/Makefile.orig.in \
+	$(top_srcdir)/test/atlocal.in $(top_srcdir)/test/Makefile.in \
+	error.c progname.c realloc.c error.h malloc.c \
+	lookupDyldFunction.c _dyld_func_lookup.c depcomp \
+	$(include_HEADERS) $(noinst_HEADERS) AUTHORS ChangeLog README \
+	TODO ar-lib compile install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -123,7 +124,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = Makefile.orig
+CONFIG_CLEAN_FILES = Makefile.orig test/atlocal test/Makefile
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -449,6 +450,10 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 distclean-hdr:
 	-rm -f config.h stamp-h1
 Makefile.orig: $(top_builddir)/config.status $(srcdir)/Makefile.orig.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+test/atlocal: $(top_builddir)/config.status $(top_srcdir)/test/atlocal.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+test/Makefile: $(top_builddir)/config.status $(top_srcdir)/test/Makefile.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-libLIBRARIES: $(lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
@@ -866,13 +871,13 @@ info: info-am
 
 info-am:
 
-install-data-am: install-includeHEADERS install-man
+install-data-am: install-data-local install-includeHEADERS install-man
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLIBRARIES
+install-exec-am: install-exec-local install-libLIBRARIES
 
 install-html: install-html-am
 
@@ -928,16 +933,16 @@ uninstall-man: uninstall-man3
 	distclean-hdr distclean-local distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-includeHEADERS \
-	install-info install-info-am install-libLIBRARIES install-man \
-	install-man3 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-includeHEADERS uninstall-libLIBRARIES uninstall-man \
-	uninstall-man3
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-exec-local install-html \
+	install-html-am install-includeHEADERS install-info \
+	install-info-am install-libLIBRARIES install-man install-man3 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-includeHEADERS \
+	uninstall-libLIBRARIES uninstall-man uninstall-man3
 
 
 all: libdl.a libdl.dylib libdl_simple.dylib dlopen.3
@@ -956,6 +961,9 @@ dist-local: $(DISTFILES)
 	rm -rf dlcompat-$(VERSION)
 .PHONY: dist-local
 
+install-exec-local: install-dlcompat
+.PHONY: install-exec-local
+
 install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
@@ -967,6 +975,9 @@ install-dlcompat: all install-my-manpage
 
 dlopen.3: dlopen.3.in
 	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < dlopen.3.in > dlopen.3
+
+install-data-local: install-my-manpage
+.PHONY: install-data-local
 
 install-my-manpage: dlopen.3
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(mandir)/man3/

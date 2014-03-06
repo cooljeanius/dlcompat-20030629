@@ -13,6 +13,7 @@ int main(int argc, const char* argv[])
 	dlsym(RTLD_DEFAULT, "_init");
 	dlsym(RTLD_NEXT, "_init");
 	dlsym(RTLD_SELF, "_init");
+	return 0;
 }
 
 /* EOF */

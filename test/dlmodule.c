@@ -27,6 +27,10 @@
 
 #include <stdio.h>
 
+extern void _init (void);
+extern void _fini (void);
+extern void test (int number);
+
 void _init ()
 {
   fprintf (stderr, "dlcompat: dl%s: _init()\n", DL_MODULE_NUMBER);

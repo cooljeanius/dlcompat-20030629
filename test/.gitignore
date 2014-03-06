@@ -4,3 +4,6 @@ dlone.so
 dlsymtest
 dltest
 dltwo.so
+atconfig
+atlocal
+Makefile
