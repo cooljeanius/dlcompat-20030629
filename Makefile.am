@@ -30,6 +30,8 @@
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
+SUBDIRS = test
+
 prefix=@prefix@
 exec_prefix = @exec_prefix@
 mandir = @mandir@
