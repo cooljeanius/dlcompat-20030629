@@ -77,6 +77,13 @@ AC_CHECK_FUNC([NSAddImage],[],
               [AC_MSG_WARN([Not tested without NSAddImage, good luck!])])
 AC_REPLACE_FUNCS([_dyld_func_lookup lookupDyldFunction])
 AC_LIBOBJ([progname])
+# The "MY_" is there because otherwise DYLD warns about it being an
+# unknown environment variable:
+export MY_DYLD_LIBOBJS="`echo \"${LIBOBJS}\" | tr \  \\\n | grep -i dyld | tr \\\n \ `"
+echo "MY_DYLD_LIBOBJS are ${MY_DYLD_LIBOBJS}"
+dnl# use this to just use the libobjs that we manually specified while
+dnl# avoiding including the ones that autoconf automatically added:
+AC_SUBST([MY_DYLD_LIBOBJS])
 
 # debug option
 AC_ARG_ENABLE([debug],

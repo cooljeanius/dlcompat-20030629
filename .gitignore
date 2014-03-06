@@ -15,3 +15,5 @@ Makefile.orig
 *.dylib
 dlopen.3
 stamp-*
+*.tar.gz
+*deps/*.*o

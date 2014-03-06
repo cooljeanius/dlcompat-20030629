@@ -54,7 +54,7 @@ DEFINES=@DEBUGDEF@ @FINKDEF@
 VERSION=@VERSION@
 NOTPREPEND=@NOTPREPEND@
 
-DESTDIR=
+DESTDIR=@prefix@
 
 AM_DISTFILES= README \
 	configure \
@@ -73,8 +73,9 @@ AM_DISTFILES= README \
 	test/Makefile test/dltest.c test/dlmodule.c test/dladdr.c
 		
 OBJS = dlfcn.o
+SIMPLE_OBJS = dlfcn_simple.c
 
-all: libdl.a libdl.dylib dlopen.3
+all: libdl.a libdl.dylib libdl_simple.dylib dlopen.3
 
 regenerate_configure: configure.ac
 	autoconf --force --warnings=all
@@ -99,29 +100,51 @@ install-dlcompat: all man
 	$(INSTALL) -m 644 dlfcn.h $(DESTDIR)/$(includedir)/
 .PHONY: install-dlcompat
 
+man_MANS = dlopen.3 dladdr.3
+
 dlopen.3: dlopen.3.in
 	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < dlopen.3.in > dlopen.3
 
-man: dlopen.3
+install-my-manpage: dlopen.3
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(mandir)/man3/
 	$(INSTALL) -m 644 dlopen.3 $(DESTDIR)/$(mandir)/man3/dlopen.3
 	$(INSTALL) -m 644 dladdr.3 $(DESTDIR)/$(mandir)/man3/dladdr.3	
 	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlsym.3
 	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlclose.3
 	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlerror.3
-		
-.c.o:
-	$(CC) $(AM_CFLAGS) $(CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(DEFINES) -o $@ -c $<
 
-libdl.a: $(OBJS) $(LIBOBJS)
+lib_LIBRARIES = libdl.a libdl_simple.a
+libdl_a_SOURCES = dlfcn.c
+libdl_a_LIBADD = $(LIBOBJS)
+# I avoided adding the ALLOCA object, because the header that goes with the
+# source for it requires actually using gnulib properly...
+libdl_simple_a_SOURCES = dlfcn_simple.c
+libdl_simple_a_LIBADD = $(MY_DYLD_LIBOBJS)
+
+# avoid installing gnulib-provided headers:
+noinst_HEADERS = error.h progname.h
+# headers that actually came with this project can be installed:
+include_HEADERS = dlfcn.h
+
+manually_build_libdl.a: $(OBJS) $(LIBOBJS)
 	$(AR) $(ARFLAGS) libdl.a $(OBJS) $(LIBOBJS)
 	$(RANLIB) libdl.a
+.PHONY: manually_build_libdl.a
 
+# I am unsure whether it would be worth it to switch to libtool for the
+# dynamic library targets, as by that point you might as well already have
+# full dynamic linking capabilities, which would be self-defeating...
 libdl.dylib: libdl.$(LIBVER).dylib
 	$(LN_S) -f libdl.$(LIBVER).dylib $@
 
+libdl_simple.dylib: libdl_simple.$(LIBVER).dylib
+	$(LN_S) -f libdl_simple.$(LIBVER).dylib $@
+
 libdl.$(LIBVER).dylib: $(OBJS) $(LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(OBJS) $(LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
+
+libdl_simple.$(LIBVER).dylib: $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS)
+	$(CC) -dynamiclib -o $@ $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
 
 clean-local:
 	rm -f $(OBJS) libdl.* *~ *.o dlopen.3

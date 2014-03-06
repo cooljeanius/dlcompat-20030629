@@ -632,6 +632,7 @@ VERSTRING
 FINKDEF
 DEBUGDEF
 OPT
+MY_DYLD_LIBOBJS
 LIBOBJS
 ALLOCA
 EGREP
@@ -6622,6 +6623,11 @@ case " $LIBOBJS " in
   *) LIBOBJS="$LIBOBJS progname.$ac_objext"
  ;;
 esac
+
+# The "MY_" is there because otherwise DYLD warns about it being an
+# unknown environment variable:
+export MY_DYLD_LIBOBJS="`echo \"${LIBOBJS}\" | tr \  \\\n | grep -i dyld | tr \\\n \ `"
+echo "MY_DYLD_LIBOBJS are ${MY_DYLD_LIBOBJS}"
 
 
 # debug option
