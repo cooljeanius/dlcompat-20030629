@@ -3,11 +3,15 @@
 *~
 *.log
 confdefs.h
+config.h
 conftest*
+conf*/*.awk
 *.status
 *.o
 lib*.a
 Makefile
+Makefile.orig
 *(Autosaved)*
 *.dylib
 dlopen.3
+stamp-*

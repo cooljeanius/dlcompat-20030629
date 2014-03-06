@@ -19,7 +19,7 @@ AC_CHECK_LIB([dl], [main])
 AC_CHECK_LIB([foo], [main])
 
 # Checks for header files.
-AC_CHECK_HEADERS([limits.h mach/mach.h stddef.h stdint.h stdlib.h string.h sys/mount.h sys/param.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h libintl.h limits.h mach/mach.h stddef.h stdint.h stdlib.h string.h sys/mount.h sys/param.h sys/time.h unistd.h wchar.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -27,9 +27,12 @@ AC_C_INLINE
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
+AC_FUNC_ALLOCA
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([atexit strchr])
+AC_FUNC_REALLOC
+AC_FUNC_STRERROR_R
+AC_CHECK_FUNCS([atexit memset strchr strerror strrchr])
 
 AC_CONFIG_FILES([Makefile
                  test/Makefile])
