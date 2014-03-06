@@ -1,3 +1,5 @@
+/* dladdr.c */
+
 #define __BSD_VISIBLE 1
 #include "dlfcn.h"
 #include <stdlib.h>
@@ -14,8 +16,7 @@ int main(int argc, const char* argv[])
 	void* addr;
 	while (syms[i]) {
 		syml = NSLookupAndBindSymbol(syms[i]);
-		if (syml)
-		{
+		if (syml) {
 			addr = NSAddressOfSymbol(syml);
 			dladdr(addr,&info);
 			fprintf(stdout,"Symbol: %s\nNSSym: %x\nAddress: %x\nFName: %s\nBase: %x\nSymbol: %s\nAddress: %x\n\n\n",
@@ -27,3 +28,5 @@ int main(int argc, const char* argv[])
 	}
 	return retCode;
 }
+
+/* EOF */

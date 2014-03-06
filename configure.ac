@@ -21,30 +21,46 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 
 # Checks for libraries.
+AC_CHECK_LIB([c],[printf])
 dnl# If you already have dlopen in your libdl, dlcompat will probably be
 dnl# unnecessary for you, but whatever...
 AC_CHECK_LIB([dl],[dlopen])
 
 # Checks for header files.
-AC_CHECK_HEADERS([limits.h])
+AC_HEADER_STAT
+AC_HEADER_STDBOOL dnl# also "_CHECK"s it
+AC_CHECK_HEADERS([limits.h mach/mach.h mach-o/nlist.h mach-o/getsect.h \
+                  pthread.h stdarg.h stddef.h stdio.h \
+                  sys/mount.h sys/param.h sys/time.h])
 AC_CHECK_HEADER([mach-o/dyld.h],[],
                 [AC_MSG_ERROR([No dyld.h found, cannot continue.])])
+case ${host} in
+  *p*pc*-apple-darwin*)
+    AC_CHECK_HEADERS([architecture/ppc/mode_independent_asm.h])
+    ;;
+esac
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
 AC_C_INLINE
 AC_C_PROTOTYPES
 AC_C_RESTRICT
+AC_C_VOLATILE
 AC_SYS_LARGEFILE
 AC_TYPE_SIZE_T
+AC_TYPE_UINTPTR_T
+AC_CHECK_TYPES([dlfunc_t])
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([atexit strchr])
+AC_CHECK_FUNCS([atexit fflush fprintf getenv memcpy \
+                snprintf strchr strcmp strlen strncpy])
 AC_CHECK_FUNC([NSLinkModule],[],
               [AC_MSG_ERROR([NSLinkModule not found, cannot continue.])])
 AC_CHECK_FUNC([NSAddImage],[],
               [AC_MSG_WARN([Not tested without NSAddImage, good luck!])])
+AC_REPLACE_FUNCS([_dyld_func_lookup lookupDyldFunction])
 
 # debug option
 AC_ARG_ENABLE([debug],

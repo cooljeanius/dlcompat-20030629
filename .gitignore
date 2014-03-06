@@ -9,3 +9,5 @@ conftest*
 lib*.a
 Makefile
 *(Autosaved)*
+*.dylib
+dlopen.3

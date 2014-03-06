@@ -1,33 +1,33 @@
-/*
-Copyright (c) 2002 Peter O'Gorman <ogorman@users.sourceforge.net>
+/* dlfcn_simple.c
+ * Copyright (c) 2002 Peter O'Gorman <ogorman@users.sourceforge.net>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
-
-/* Just to prove that it isn't that hard to add Mac calls to your code :)
-   This works with pretty much everything, including kde3 xemacs and the gimp,
-   I'd guess that it'd work in at least 95% of cases, use this as your starting
-   point, rather than the mess that is dlfcn.c, assuming that your code does not
-   require ref counting or symbol lookups in dependent libraries
-*/
+/* Just to prove that it is NOT that hard to add Mac calls to your code :)
+ * This works with pretty much everything, including kde3 xemacs and the gimp.
+ * I would guess that it would work in at least 95% of cases, so use this as
+ * your starting point, rather than the mess that is dlfcn.c, assuming that your
+ * code does not require ref counting or symbol lookups in dependent libraries.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,8 +56,7 @@ static const char *error(int setget, const char *str, ...)
 	const char *dylderrstr;
 	const char *file;
 	va_list arg;
-	if (setget <= 0)
-	{
+	if (setget <= 0) {
 		va_start(arg, str);
 		strncpy(errstr, "dlsimple: ", ERR_STR_LEN);
 		vsnprintf(errstr + 10, ERR_STR_LEN - 10, str, arg);
@@ -66,18 +65,18 @@ static const char *error(int setget, const char *str, ...)
 		if (setget == 0) {
 			NSLinkEditError(&ler, &lerno, &file, &dylderrstr);
 			fprintf(stderr,"dyld: %s\n",dylderrstr);
-			if (dylderrstr && strlen(dylderrstr))
+			if (dylderrstr && strlen(dylderrstr)) {
 				strncpy(errstr,dylderrstr,ERR_STR_LEN);
-		}		
+			}
+		}
 		err_filled = 1;
 		retval = NULL;
-	}
-	else
-	{
-		if (!err_filled)
+	} else {
+		if (!err_filled) {
 			retval = NULL;
-		else
+		} else {
 			retval = errstr;
+		}
 		err_filled = 0;
 	}
 	return retval;
@@ -93,9 +92,10 @@ void *dlopen(const char *path, int mode)
 	unsigned int flags =  NSLINKMODULE_OPTION_RETURN_ON_ERROR | NSLINKMODULE_OPTION_PRIVATE;
 
 	/* If we got no path, the app wants the global namespace, use -1 as the marker
-	   in this case */
-	if (!path)
+	 * in this case */
+	if (!path) {
 		return (void *)-1;
+	}
 
 	/* Create the object file image, works for things linked with the -bundle arg to ld */
 	ofirc = NSCreateObjectFileImageFromFile(path, &ofi);
@@ -105,16 +105,15 @@ void *dlopen(const char *path, int mode)
 			/* It was okay, so use NSLinkModule to link in the image */
 			if (!(mode & RTLD_LAZY)) flags += NSLINKMODULE_OPTION_BINDNOW;
 			module = NSLinkModule(ofi, path,flags);
-			/* Don't forget to destroy the object file image, unless you like leaks */
+			/* Do NOT forget to destroy the object file image, unless you like
+			 * leaks */
 			NSDestroyObjectFileImage(ofi);
-			/* If the mode was global, then change the module, this avoids
-			   multiply defined symbol errors to first load private then make
-			   global. Silly, isn't it. */
-			if ((mode & RTLD_GLOBAL))
-			{
-			  if (!make_private_module_public)
-			  {
-			    _dyld_func_lookup("__dyld_NSMakePrivateModulePublic", 
+			/* If the mode was global, then change the module; this avoids
+			 * multiply defined symbol errors to first load private then make
+			 *  global. Silly, is it not? */
+			if ((mode & RTLD_GLOBAL)) {
+			  if (!make_private_module_public) {
+			    _dyld_func_lookup("__dyld_NSMakePrivateModulePublic",
 				(unsigned long *)&make_private_module_public);
 			  }
 			  make_private_module_public(module);
@@ -134,11 +133,12 @@ void *dlopen(const char *path, int mode)
 			error(0,"Bad object file format :  \"%s\"", path);
 			return 0;
 		case NSObjectFileImageAccess:
-			error(0,"Can't read object file :  \"%s\"", path);
-			return 0;		
+			error(0,"Cannot read object file :  \"%s\"", path);
+			return 0;
 	}
-	if (!module)
-		error(0, "Can not open \"%s\"", path);
+	if (!module) {
+		error(0, "Cannot open \"%s\"", path);
+	}
 	return module;
 }
 
@@ -147,25 +147,20 @@ void *dlsymIntern(void *handle, const char *symbol)
 {
 	NSSymbol *nssym = 0;
 	/* If the handle is -1, if is the app global context */
-	if (handle == (void *)-1)
-	{
+	if (handle == (void *)-1) {
 		/* Global context, use NSLookupAndBindSymbol */
-		if (NSIsSymbolNameDefined(symbol))
-		{
+		if (NSIsSymbolNameDefined(symbol)) {
 			nssym = NSLookupAndBindSymbol(symbol);
 		}
 
 	}
-	/* Now see if the handle is a struch mach_header* or not, use NSLookupSymbol in image
-	   for libraries, and NSLookupSymbolInModule for bundles */
-	else
-	{
+	/* Now see if the handle is a struch mach_header* or not, use NSLookupSymbol
+	 * in image for libraries, and NSLookupSymbolInModule for bundles */
+	else {
 		/* Check for both possible magic numbers depending on x86/ppc byte order */
 		if ((((struct mach_header *)handle)->magic == MH_MAGIC) ||
-			(((struct mach_header *)handle)->magic == MH_CIGAM))
-		{
-			if (NSIsSymbolNameDefinedInImage((struct mach_header *)handle, symbol))
-			{
+			(((struct mach_header *)handle)->magic == MH_CIGAM)) {
+			if (NSIsSymbolNameDefinedInImage((struct mach_header *)handle, symbol)) {
 				nssym = NSLookupSymbolInImage((struct mach_header *)handle,
 											  symbol,
 											  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
@@ -173,13 +168,11 @@ void *dlsymIntern(void *handle, const char *symbol)
 			}
 
 		}
-		else
-		{
+		else {
 			nssym = NSLookupSymbolInModule(handle, symbol);
 		}
 	}
-	if (!nssym)
-	{
+	if (!nssym) {
 		error(0, "Symbol \"%s\" Not found", symbol);
 		return NULL;
 	}
@@ -194,13 +187,11 @@ const char *dlerror(void)
 int dlclose(void *handle)
 {
 	if ((((struct mach_header *)handle)->magic == MH_MAGIC) ||
-		(((struct mach_header *)handle)->magic == MH_CIGAM))
-	{
-		error(-1, "Can't remove dynamic libraries on darwin");
+		(((struct mach_header *)handle)->magic == MH_CIGAM)) {
+		error(-1, "Cannot remove dynamic libraries on darwin");
 		return 0;
 	}
-	if (!NSUnLinkModule(handle, 0))
-	{
+	if (!NSUnLinkModule(handle, 0)) {
 		error(0, "unable to unlink module %s", NSNameOfModule(handle));
 		return 1;
 	}
@@ -216,24 +207,20 @@ void *dlsym(void *handle, const char *symbol)
 	void *value = NULL;
 	char *malloc_sym = NULL;
 
-	if (sym_len < 256)
-	{
+	if (sym_len < 256) {
 		snprintf(undersym, 256, "_%s", symbol);
 		value = dlsymIntern(handle, undersym);
-	}
-	else
-	{
+	} else {
 		malloc_sym = malloc(sym_len + 2);
-		if (malloc_sym)
-		{
+		if (malloc_sym) {
 			sprintf(malloc_sym, "_%s", symbol);
 			value = dlsymIntern(handle, malloc_sym);
 			free(malloc_sym);
-		}
-		else
-		{
+		} else {
 			error(-1, "Unable to allocate memory");
 		}
 	}
 	return value;
 }
+
+/* EOF */

@@ -38,7 +38,8 @@ DEBUG=0
 CC=@CC@
 OPT=@OPT@
 DEBUGOPT=-g -O0
-CFLAGS=-Wall -Wstrict-prototypes -Wmissing-prototypes $(OPT)
+CFLAGS=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit $(OPT)
+CXXFLAGS=-Wno-deprecated
 AR=ar cru
 RANLIB=@RANLIB@
 INSTALL=/usr/bin/install
@@ -117,3 +118,8 @@ libdl.$(LIBVER).dylib: $(OBJS)
 
 clean:
 	rm -f $(OBJS) libdl.* *~ *.o dlopen.3
+.PHONY: clean
+
+distclean: clean
+	rm -rf autom4te.cache || rmdir autom4te.cache
+.PHONY: distclean
