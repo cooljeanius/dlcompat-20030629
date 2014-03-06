@@ -270,6 +270,7 @@ CYGPATH_W = @CYGPATH_W@
 DEBUGDEF = @DEBUGDEF@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DESTDIR = @DESTDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -362,7 +363,6 @@ AM_CPPFLAGS = -I.
 AM_CXXFLAGS = -Wno-deprecated
 ARFLAGS = cru
 DEFINES = @DEBUGDEF@ @FINKDEF@
-DESTDIR = @prefix@
 AM_DISTFILES = README \
 	configure \
 	configure.ac \
@@ -956,7 +956,7 @@ dist-local: $(DISTFILES)
 	rm -rf dlcompat-$(VERSION)
 .PHONY: dist-local
 
-install-dlcompat: all man
+install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/
@@ -997,7 +997,7 @@ libdl_simple.$(LIBVER).dylib: $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
 
 clean-local:
-	rm -f $(OBJS) libdl.* *~ *.o dlopen.3
+	rm -f $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
 .PHONY: clean-local
 
 distclean-local: clean-local

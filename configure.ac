@@ -109,6 +109,8 @@ AC_ARG_ENABLE([fink],
 		NOTPREPEND="indeed"
 		])
 
+AC_ARG_VAR([DESTDIR],[a useful variable for package managers])
+AC_SUBST([DESTDIR])
 AC_SUBST([OPT])
 AC_SUBST([DEBUGDEF])
 AC_SUBST([FINKDEF])

@@ -54,7 +54,7 @@ DEFINES=@DEBUGDEF@ @FINKDEF@
 VERSION=@VERSION@
 NOTPREPEND=@NOTPREPEND@
 
-DESTDIR=@prefix@
+DESTDIR=@DESTDIR@
 
 AM_DISTFILES= README \
 	configure \
@@ -91,7 +91,7 @@ dist-local: $(DISTFILES)
 	rm -rf dlcompat-$(VERSION)
 .PHONY: dist-local
 
-install-dlcompat: all man
+install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/
@@ -147,7 +147,7 @@ libdl_simple.$(LIBVER).dylib: $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
 
 clean-local:
-	rm -f $(OBJS) libdl.* *~ *.o dlopen.3
+	rm -f $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
 .PHONY: clean-local
 
 distclean-local: clean-local

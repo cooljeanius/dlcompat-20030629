@@ -632,6 +632,7 @@ VERSTRING
 FINKDEF
 DEBUGDEF
 OPT
+DESTDIR
 MY_DYLD_LIBOBJS
 LIBOBJS
 ALLOCA
@@ -762,7 +763,8 @@ CCASFLAGS
 CPP
 CXX
 CXXFLAGS
-CCC'
+CCC
+DESTDIR'
 
 
 # Initialize some variables set by options.
@@ -1403,6 +1405,7 @@ Some influential environment variables:
   CPP         C preprocessor
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
+  DESTDIR     a useful variable for package managers
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -6660,6 +6663,8 @@ else
 		NOTPREPEND="indeed"
 
 fi
+
+
 
 
 
