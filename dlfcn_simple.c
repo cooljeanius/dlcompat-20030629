@@ -29,6 +29,12 @@
  * code does not require ref counting or symbol lookups in dependent libraries.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# define DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD 1
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

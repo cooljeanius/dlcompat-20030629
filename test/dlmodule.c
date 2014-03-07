@@ -25,6 +25,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#else
+# define DLMODULE_C_NON_AUTOHEADER_BUILD 1
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 
 extern void _init (void);

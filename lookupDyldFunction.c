@@ -2,6 +2,12 @@
 /* largely taken from dyldAPIs.cpp in dyld-97.1 */
 
 /* some of these includes might be unnecessary, but whatever: */
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# define LOOKUPDYLDFUNCTION_C_NON_AUTOHEADER_BUILD 1
+#endif /* HAVE_CONFIG_H */
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

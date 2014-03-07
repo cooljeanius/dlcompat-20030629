@@ -1,5 +1,11 @@
 /* dlsymtest.c */
 
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#else
+# define DLSYMTEST_C_NON_AUTOHEADER_BUILD 1
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 
 #include "../dlfcn.h"

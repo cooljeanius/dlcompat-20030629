@@ -1,6 +1,13 @@
 /* dladdr.c */
 
 #define __BSD_VISIBLE 1
+
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#else
+# define DLADDR_C_NON_AUTOHEADER_BUILD 1
+#endif /* HAVE_CONFIG_H */
+
 #include "dlfcn.h"
 #include <stdlib.h>
 #include <stdio.h>

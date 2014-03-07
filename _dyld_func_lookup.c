@@ -5,7 +5,7 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #else
-# define NON_AUTOHEADER_BUILD 1
+# define _DYLD_FUNC_LOOKUP_C_NON_AUTOHEADER_BUILD 1
 #endif /* HAVE_CONFIG_H */
 
 #if __ppc__ || __ppc64__
