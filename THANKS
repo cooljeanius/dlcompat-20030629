@@ -1,1 +1,5 @@
-Thanks to the Fink Project, and to Apple
+Thanks to the Fink Project, and to Apple.
+Also thanks to the MacPorts project for keeping the distfile for this
+project cached, so I could still find it even when the original sources
+seemed to have disappeared. (I suppose I could have used the WayBack
+Machine on archive.org, but this was easier...)

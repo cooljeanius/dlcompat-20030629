@@ -1,3 +1,12 @@
 - Implement RTLD_LAZY, RTLD_SHARED/UNSHARED, RTLD_LAZY_UNDEF, and
-  RTLD_MAIN_ONLY if needed.
-- Fix the testsuite.
+  RTLD_MAIN_ONLY (if needed).
+- Fix the dladdr test in the testsuite.
+- Tie the return code of dlsymtest to whether it was successful or not.
+- Make the reimplementation of _dyld_func_lookup actually use its
+  parameters.
+- Check if we have pragma CALL_ON_LOAD, and find a suitable replacement for
+  when it is missing.
+- Use the NSModule api (?)
+- Use the routine image_for_address (?)
+- Use AvailabilityMacros to check for OS X version, and replace deprecated
+  functions conditionally based on OS X version.
