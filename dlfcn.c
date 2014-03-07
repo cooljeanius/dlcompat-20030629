@@ -132,10 +132,28 @@ struct dlstatus
 static struct dlstatus mainStatus = { 0, MAGIC_DYLIB_MOD, NULL, -1, RTLD_GLOBAL, 0, 0, 0 };
 static struct dlstatus *stqueue = &mainStatus;
 
+#ifndef INLINECALL
+# ifdef __STRICT_ANSI__
+#  ifdef __inline__
+#   define INLINECALL __inline__
+#  else
+#   if defined(__NO_INLINE__) && defined(__GNUC__)
+#    warning "INLINECALL will be unavailable when using the '-ansi' compiler flag"
+#   endif /* __NO_INLINE__ && __GNUC__ */
+#   define INLINECALL /* nothing */
+#  endif /* __inline__ */
+# else
+#  define INLINECALL inline
+# endif /* __STRICT_ANSI__ */
+#endif /* !INLINECALL */
 
 /* Storage for the last error message (used by dlerror()) */
-/* static char err_str[ERR_STR_LEN]; */
-/* static int err_filled = 0; */
+#if !defined(err_str) && defined(ERR_STR_LEN)
+static char err_str[ERR_STR_LEN];
+#endif /* !err_str && ERR_STR_LEN */
+#ifndef err_filled
+static int err_filled = 0;
+#endif /* !err_filled */
 
 /* Prototypes to internal functions */
 static void debug(const char *fmt, ...);
@@ -146,7 +164,7 @@ static const char *getSearchPath(int i);
 static const char *getFullPath(int i, const char *file);
 static const struct stat *findFile(const char *file, const char **fullPath);
 static int isValidStatus(struct dlstatus *status);
-static inline int isFlagSet(int mode, int flag);
+static INLINECALL int isFlagSet(int mode, int flag);
 static struct dlstatus *lookupStatus(const struct stat *sbuf);
 static void insertStatus(struct dlstatus *dls, const struct stat *sbuf);
 static int promoteLocalToGlobal(struct dlstatus *dls);
@@ -158,14 +176,14 @@ static NSSymbol *search_linked_libs(const struct mach_header *mh, const char *sy
 static const char *get_lib_name(const struct mach_header *mh);
 static const struct mach_header *get_mach_header_from_NSModule(NSModule * mod);
 static void dlcompat_init_func(void);
-static inline void dolock(void);
-static inline void dounlock(void);
+static INLINECALL void dolock(void);
+static INLINECALL void dounlock(void);
 static void dlerrorfree(void *data);
 static void resetdlerror(void);
 static const struct mach_header *my_find_image(const char *name);
 static const struct mach_header *image_for_address(const void *address);
 static void dlcompat_cleanup(void);
-static inline const char *dyld_error_str(void);
+static INLINECALL const char *dyld_error_str(void);
 
 #if FINK_BUILD
 /* Two Global Functions */
@@ -196,7 +214,9 @@ static void error(const char *str, ...)
 {
 	va_list arg;
 	struct dlthread  *tss;
+#ifndef err_str
 	char * err_str;
+#endif /* !err_str */
 	va_start(arg, str);
 	tss = pthread_getspecific(dlerror_key);
 	err_str = tss->errstr;
@@ -389,7 +409,7 @@ static int isValidStatus(struct dlstatus *status)
 	return FALSE;
 }
 
-static inline int isFlagSet(int mode, int flag)
+static INLINECALL int isFlagSet(int mode, int flag)
 {
 	return (mode & flag) == flag;
 }
@@ -526,7 +546,7 @@ NSSymbol *search_linked_libs(const struct mach_header * mh, const char *symbol)
 }
 
 /* Up to the caller to free() returned string */
-static inline const char *dyld_error_str()
+static INLINECALL const char *dyld_error_str()
 {
 	NSLinkEditErrors dylder;
 	int dylderno;
@@ -809,7 +829,7 @@ static void dlerrorfree(void *data)
  * because they are not available pre OS X 10.2, so we fake it
  * using thread specific storage to keep a lock count
  */
-static inline void dolock(void)
+static INLINECALL void dolock(void)
 {
 	int err = 0;
 	struct dlthread *tss;
@@ -832,7 +852,7 @@ static inline void dolock(void)
 	}
 }
 
-static inline void dounlock(void)
+static INLINECALL void dounlock(void)
 {
 	int err = 0;
 	struct dlthread *tss;

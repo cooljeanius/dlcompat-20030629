@@ -31,6 +31,8 @@ extern void _init (void);
 extern void _fini (void);
 extern void test (int number);
 
+/* DL_MODULE_NUMBER needs to be defined with a compiler flag
+ * (see the Makefile for examples) */
 void _init ()
 {
   fprintf (stderr, "dlcompat: dl%s: _init()\n", DL_MODULE_NUMBER);

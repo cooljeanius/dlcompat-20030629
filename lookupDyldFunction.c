@@ -1,6 +1,7 @@
 /* lookupDyldFunction.c */
 /* largely taken from dyldAPIs.cpp in dyld-97.1 */
 
+/* some of these includes might be unnecessary, but whatever: */
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -29,7 +30,7 @@ typedef struct {
 	/* we are just looking up the names of functions for this file, so we should
 	 * be able to get away with just using strings instead of the actual
 	 * implementations: */
-    const char*	implementation;
+    const char*	implementation; /*(was previously "void*" instead of "const char*")*/
 } dyld_func;
 #endif /* !dyld_func */
 
@@ -120,6 +121,8 @@ bool lookupDyldFunction(const char* name, uintptr_t* address)
 
 	for (p = dyld_funcs; p->name != NULL; ++p) {
 	    if ( strcmp(p->name, name) == 0 ) {
+			/* not sure if I can use unimplemented() like this... should I put
+			 * quotes around it to make it a string? Or cast it? */
 			if( p->implementation == unimplemented ) {
 				printf("unimplemented dyld function: %s\n", p->name);
 			}

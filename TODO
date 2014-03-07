@@ -1,2 +1,3 @@
 - Implement RTLD_LAZY, RTLD_SHARED/UNSHARED, RTLD_LAZY_UNDEF, and
   RTLD_MAIN_ONLY if needed.
+- Fix the testsuite.

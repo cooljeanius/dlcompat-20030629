@@ -18,3 +18,13 @@ stamp-*
 *.tar.gz
 *deps/*.*o
 *.dSYM
+*.hmap
+*.pbxuser
+*.perspectivev3
+*.pbxbtree
+*.pbxsymbols
+*.dat
+*.octest
+*.pbxstrings
+*.build
+build/*

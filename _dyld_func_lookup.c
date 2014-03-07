@@ -27,7 +27,22 @@ extern int _dyld_func_lookup(const char* dyld_func_name, void **address);
 # define ASMCALL __asm
 #endif /* __GNUC__ || _MSC_VER */
 
-inline int _dyld_func_lookup(const char* dyld_func_name, void **address)
+#ifndef INLINECALL
+# ifdef __STRICT_ANSI__
+#  ifdef __inline__
+#   define INLINECALL __inline__
+#  else
+#   if defined(__NO_INLINE__) && defined(__GNUC__)
+#    warning "INLINECALL will be unavailable when using the '-ansi' compiler flag"
+#   endif /* __NO_INLINE__ && __GNUC__ */
+#   define INLINECALL /* nothing */
+#  endif /* __inline__ */
+# else
+#  define INLINECALL inline
+# endif /* __STRICT_ANSI__ */
+#endif /* !INLINECALL */
+
+INLINECALL int _dyld_func_lookup(const char* dyld_func_name, void **address)
 {
 #if __GNUC__
 /* not sure if __volatile__ is needed or not? */

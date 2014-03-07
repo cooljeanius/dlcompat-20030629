@@ -62,6 +62,7 @@ AC_C_RESTRICT
 AC_C_VOLATILE
 AC_SYS_LARGEFILE
 AC_TYPE_SIZE_T
+AC_TYPE_UINT32_T
 AC_TYPE_UINTPTR_T
 AC_CHECK_TYPES([dlfunc_t])
 
@@ -71,7 +72,7 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_STRERROR_R
-AC_CHECK_FUNCS([atexit fflush fprintf getenv memcpy memset \
+AC_CHECK_FUNCS([atexit calloc fflush fprintf getenv memcpy memset \
                 snprintf strchr strcmp strerror strlen strncpy strrchr])
 AC_CHECK_FUNC([NSLinkModule],[],
               [AC_MSG_ERROR([NSLinkModule not found, cannot continue.])])

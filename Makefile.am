@@ -158,6 +158,8 @@ clean-local:
 	rm -f $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
 .PHONY: clean-local
 
+DISTCLEANFILES = *~ .DS_Store
+
 distclean-local: clean-local
 	rm -rf autom4te.cache || rmdir autom4te.cache
 .PHONY: distclean-local

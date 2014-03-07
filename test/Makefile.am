@@ -48,6 +48,9 @@ libfoo.dylib: libfoo.o
 
 clean-local:		
 	rm -f *~ *.o *.so *.dylib *.a dltest dladdr dlsymtest
+	rm -rf *.dSYM || rmdir *.dSYM
+
+DISTCLEANFILES = .DS_Store
 
 # use installcheck instead of check because it requires libdl to be
 # installed due to the use of the '-install_name' flag:
