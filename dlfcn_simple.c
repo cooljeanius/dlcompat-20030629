@@ -49,13 +49,16 @@ static const char *error(int setget, const char *str, ...);
 static const char *error(int setget, const char *str, ...)
 {
 	static char errstr[ERR_STR_LEN];
-	static int err_filled = 0;
+	static int err_filled;
 	const char *retval;
 	NSLinkEditErrors ler;
 	int lerno;
 	const char *dylderrstr;
 	const char *file;
 	va_list arg;
+
+	err_filled = 0;
+
 	if (setget <= 0) {
 		va_start(arg, str);
 		strncpy(errstr, "dlsimple: ", ERR_STR_LEN);
@@ -85,11 +88,15 @@ static const char *error(int setget, const char *str, ...)
 /* dlopen */
 void *dlopen(const char *path, int mode)
 {
-	void *module = 0;
-	NSObjectFileImage ofi = 0;
+	void *module;
+	NSObjectFileImage ofi;
 	NSObjectFileImageReturnCode ofirc;
 	static int (*make_private_module_public) (NSModule module) = 0;
-	unsigned int flags =  NSLINKMODULE_OPTION_RETURN_ON_ERROR | NSLINKMODULE_OPTION_PRIVATE;
+	unsigned int flags;
+
+	module = 0;
+	ofi = 0;
+	flags = NSLINKMODULE_OPTION_RETURN_ON_ERROR | NSLINKMODULE_OPTION_PRIVATE;
 
 	/* If we got no path, the app wants the global namespace, use -1 as the marker
 	 * in this case */
@@ -99,8 +106,7 @@ void *dlopen(const char *path, int mode)
 
 	/* Create the object file image, works for things linked with the -bundle arg to ld */
 	ofirc = NSCreateObjectFileImageFromFile(path, &ofi);
-	switch (ofirc)
-	{
+	switch (ofirc) {
 		case NSObjectFileImageSuccess:
 			/* It was okay, so use NSLinkModule to link in the image */
 			if (!(mode & RTLD_LAZY)) flags += NSLINKMODULE_OPTION_BINDNOW;
@@ -110,11 +116,13 @@ void *dlopen(const char *path, int mode)
 			NSDestroyObjectFileImage(ofi);
 			/* If the mode was global, then change the module; this avoids
 			 * multiply defined symbol errors to first load private then make
-			 *  global. Silly, is it not? */
+			 * global. Silly, is it not? */
 			if ((mode & RTLD_GLOBAL)) {
 			  if (!make_private_module_public) {
-			    _dyld_func_lookup("__dyld_NSMakePrivateModulePublic",
-				(unsigned long *)&make_private_module_public);
+				  /* see the note in dlfcn.c about casting the paramaters of
+				   * _dyld_func_lookup(): */
+				   _dyld_func_lookup("__dyld_NSMakePrivateModulePublic",
+				   (void**)(unsigned long *)&make_private_module_public);
 			  }
 			  make_private_module_public(module);
 			}
@@ -145,12 +153,15 @@ void *dlopen(const char *path, int mode)
 /* dlsymIntern is used by dlsym to find the symbol */
 void *dlsymIntern(void *handle, const char *symbol)
 {
-	NSSymbol *nssym = 0;
+	NSSymbol *nssym;
+
+	nssym = 0;
+
 	/* If the handle is -1, if is the app global context */
 	if (handle == (void *)-1) {
 		/* Global context, use NSLookupAndBindSymbol */
 		if (NSIsSymbolNameDefined(symbol)) {
-			nssym = NSLookupAndBindSymbol(symbol);
+			nssym = (NSSymbol *)NSLookupAndBindSymbol(symbol);
 		}
 
 	}
@@ -161,22 +172,20 @@ void *dlsymIntern(void *handle, const char *symbol)
 		if ((((struct mach_header *)handle)->magic == MH_MAGIC) ||
 			(((struct mach_header *)handle)->magic == MH_CIGAM)) {
 			if (NSIsSymbolNameDefinedInImage((struct mach_header *)handle, symbol)) {
-				nssym = NSLookupSymbolInImage((struct mach_header *)handle,
-											  symbol,
-											  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
-											  | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+				nssym = (NSSymbol *)NSLookupSymbolInImage((struct mach_header *)handle, symbol,
+														  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
+														  | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 			}
 
-		}
-		else {
-			nssym = NSLookupSymbolInModule(handle, symbol);
+		} else {
+			nssym = (NSSymbol *)NSLookupSymbolInModule(handle, symbol);
 		}
 	}
 	if (!nssym) {
 		error(0, "Symbol \"%s\" Not found", symbol);
 		return NULL;
 	}
-	return NSAddressOfSymbol(nssym);
+	return NSAddressOfSymbol((NSSymbol)nssym);
 }
 
 const char *dlerror(void)
@@ -203,9 +212,13 @@ int dlclose(void *handle)
 void *dlsym(void *handle, const char *symbol)
 {
 	static char undersym[257];	/* Saves calls to malloc(3) */
-	int sym_len = strlen(symbol);
-	void *value = NULL;
-	char *malloc_sym = NULL;
+	int sym_len;
+	void *value;
+	char *malloc_sym;
+
+	sym_len = (int)strlen(symbol);
+	value = NULL;
+	malloc_sym = NULL;
 
 	if (sym_len < 256) {
 		snprintf(undersym, 256, "_%s", symbol);

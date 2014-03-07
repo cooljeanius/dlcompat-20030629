@@ -42,7 +42,7 @@ AC_CHECK_LIB([dl],[dlopen])
 AC_HEADER_STAT
 AC_HEADER_STDBOOL dnl# also "_CHECK"s it
 AC_CHECK_HEADERS([fcntl.h libintl.h limits.h mach/mach.h \
-                  mach-o/nlist.h mach-o/getsect.h \
+                  mach-o/loader.h mach-o/nlist.h mach-o/getsect.h \
                   pthread.h stdarg.h stddef.h stdio.h \
                   sys/mount.h sys/param.h sys/time.h \
                   wchar.h])

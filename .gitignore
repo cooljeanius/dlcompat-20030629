@@ -24,6 +24,7 @@ stamp-*
 *.pbxbtree
 *.pbxsymbols
 *.dat
+*.xcodeproj/.dat*
 *.octest
 *.pbxstrings
 *.build

@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <mach-o/dyld.h>
+#include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include <mach-o/getsect.h>
 /* Just playing to see if it would compile with the freebsd headers, it does,
@@ -56,6 +57,10 @@
 #ifndef LC_LOAD_WEAK_DYLIB
 # define LC_LOAD_WEAK_DYLIB (0x18 | LC_REQ_DYLD)
 #endif /* !LC_LOAD_WEAK_DYLIB */
+/* just to make sure */
+#ifndef LC_SEGMENT
+# define LC_SEGMENT 0x1
+#endif /* !LC_SEGMENT */
 
 /* With this stuff here, this thing may actually compile/run on 10.0 systems
  * Not that I have a 10.0 system to test it on any longer though...
@@ -137,9 +142,9 @@ static struct dlstatus *stqueue = &mainStatus;
 #  ifdef __inline__
 #   define INLINECALL __inline__
 #  else
-#   if defined(__NO_INLINE__) && defined(__GNUC__)
+#   if defined(__NO_INLINE__) && defined(__GNUC__) && !defined(__STDC__)
 #    warning "INLINECALL will be unavailable when using the '-ansi' compiler flag"
-#   endif /* __NO_INLINE__ && __GNUC__ */
+#   endif /* __NO_INLINE__ && __GNUC__ && !__STDC__ */
 #   define INLINECALL /* nothing */
 #  endif /* __inline__ */
 # else
@@ -149,10 +154,16 @@ static struct dlstatus *stqueue = &mainStatus;
 
 /* Storage for the last error message (used by dlerror()) */
 #if !defined(err_str) && defined(ERR_STR_LEN)
-static char err_str[ERR_STR_LEN];
+static char err_str[ERR_STR_LEN]; /* unused? (formerly) */
+# ifndef ERR_STR_GLOBALLY_DEFINED
+#  define ERR_STR_GLOBALLY_DEFINED 1
+# endif /* !ERR_STR_GLOBALLY_DEFINED */
 #endif /* !err_str && ERR_STR_LEN */
 #ifndef err_filled
-static int err_filled = 0;
+static int err_filled = 0; /* unused? (formerly) */
+# ifndef ERR_FILLED_GLOBALLY_DEFINED
+#  define ERR_FILLED_GLOBALLY_DEFINED 1
+# endif /* !ERR_FILLED_GLOBALLY_DEFINED */
 #endif /* !err_filled */
 
 /* Prototypes to internal functions */
@@ -214,17 +225,40 @@ static void error(const char *str, ...)
 {
 	va_list arg;
 	struct dlthread  *tss;
-#ifndef err_str
+#if !defined(err_str) && !defined(ERR_STR_GLOBALLY_DEFINED)
 	char * err_str;
-#endif /* !err_str */
+#else
+	/* err_str should already be defined in this case: */
+	char * new_err_str;
+	new_err_str = err_str;
+	/* dummy to silence clang static analyzer warning about value stored to
+	 * 'new_err_str' never being read: */
+	if (new_err_str == err_str) {
+		;
+	}
+#endif /* !err_str && !ERR_STR_GLOBALLY_DEFINED */
 	va_start(arg, str);
 	tss = pthread_getspecific(dlerror_key);
+#ifndef ERR_STR_GLOBALLY_DEFINED
 	err_str = tss->errstr;
 	strncpy(err_str, "dlcompat: ", ERR_STR_LEN);
 	vsnprintf(err_str + 10, ERR_STR_LEN - 10, str, arg);
 	va_end(arg);
 	debug("ERROR: %s\n", err_str);
+#else
+	new_err_str = tss->errstr;
+	strncpy(new_err_str, "dlcompat: ", ERR_STR_LEN);
+	vsnprintf(new_err_str + 10, ERR_STR_LEN - 10, str, arg);
+	va_end(arg);
+	debug("ERROR: %s\n", new_err_str);
+#endif /* !ERR_STR_GLOBALLY_DEFINED */
 	tss->errset = 1;
+#if defined(err_filled) || defined(ERR_FILLED_GLOBALLY_DEFINED)
+	/* dummy to silence warning about 'err_filled' being unused: */
+	if (err_filled == 0) {
+		;
+	}
+#endif /* err_filled || ERR_FILLED_GLOBALLY_DEFINED */
 }
 
 static void warning(const char *str)
@@ -246,13 +280,17 @@ static const char *safegetenv(const char *s)
  */
 static const char *get_lib_name(const struct mach_header *mh)
 {
-	unsigned long count = _dyld_image_count();
+	unsigned long count;
 	unsigned long i;
-	const char *val = NULL;
+	const char *val;
+
+	count = _dyld_image_count();
+	val = NULL;
+
 	if (mh) {
 		for (i = 0; i < count; i++) {
-			if (mh == _dyld_get_image_header(i)) {
-				val = _dyld_get_image_name(i);
+			if (mh == _dyld_get_image_header((uint32_t)i)) {
+				val = _dyld_get_image_name((uint32_t)i);
 				break;
 			}
 		}
@@ -267,14 +305,19 @@ static const char *get_lib_name(const struct mach_header *mh)
  */
 static const struct mach_header *get_mach_header_from_NSModule(NSModule * mod)
 {
-	const char *mod_name = NSNameOfModule(mod);
-	struct mach_header *mh = NULL;
-	unsigned long count = _dyld_image_count();
+	const char *mod_name;
+	struct mach_header *mh;
+	unsigned long count;
 	unsigned long i;
+
+	mod_name = (const char*)NSNameOfModule((NSModule)mod);
+	mh = NULL;
+	count = _dyld_image_count();
+
 	debug("Module name: %s", mod_name);
 	for (i = 0; i < count; i++) {
-		if (!strcmp(mod_name, _dyld_get_image_name(i))) {
-			mh = _dyld_get_image_header(i);
+		if (!strcmp(mod_name, _dyld_get_image_name((uint32_t)i))) {
+			mh = (struct mach_header *)_dyld_get_image_header((uint32_t)i);
 			break;
 		}
 	}
@@ -293,10 +336,16 @@ static const struct mach_header *get_mach_header_from_NSModule(NSModule * mod)
 static const char *searchList()
 {
 	size_t buf_size;
-	static char *buf=NULL;
-	const char *ldlp = safegetenv("LD_LIBRARY_PATH");
-	const char *dyldlp = safegetenv("DYLD_LIBRARY_PATH");
-	const char *stdpath = getenv("DYLD_FALLBACK_LIBRARY_PATH");
+	static char *buf;
+	const char *ldlp;
+	const char *dyldlp;
+	const char *stdpath;
+
+	buf = NULL;
+	ldlp = safegetenv("LD_LIBRARY_PATH");
+	dyldlp = safegetenv("DYLD_LIBRARY_PATH");
+	stdpath = getenv("DYLD_FALLBACK_LIBRARY_PATH");
+
 	if (!stdpath) {
 		stdpath = "/usr/local/lib:/lib:/usr/lib";
 	}
@@ -312,11 +361,17 @@ static const char *searchList()
 /* Returns the ith search path from the list as computed by searchList() */
 static const char *getSearchPath(int i)
 {
-	static const char *list = 0;
-	static char **path = (char **)0;
-	static int end = 0;
-	static int numsize = MAX_SEARCH_PATHS;
+	static const char *list;
+	static char **path;
+	static int end;
+	static int numsize;
 	static char **tmp;
+
+	list = 0;
+	path = (char **)0;
+	end = 0;
+	numsize = MAX_SEARCH_PATHS;
+
 	/* So we can call free() in the "destructor" we use i=-1 to return the alloc'd array */
 	if (i == -1) {
 		return (const char*)path;
@@ -343,8 +398,10 @@ static const char *getSearchPath(int i)
 	while (!path[i] && !end) {
 		path[i] = strsep((char **)&list, ":");
 
-		if (path[i][0] == 0) {
-			path[i] = 0;
+		if (path != NULL) {
+			if (path[i][0] == 0) { /* null pointer dereference here? */
+				path[i] = 0;
+			}
 		}
 		end = (list == 0);
 	}
@@ -354,7 +411,10 @@ static const char *getSearchPath(int i)
 static const char *getFullPath(int i, const char *file)
 {
 	static char buf[PATH_MAX];
-	const char *path = getSearchPath(i);
+	const char *path;
+
+	path = getSearchPath(i);
+
 	if (path) {
 		snprintf(buf, PATH_MAX, "%s/%s", path, file);
 	}
@@ -367,9 +427,12 @@ static const char *getFullPath(int i, const char *file)
  */
 static const struct stat *findFile(const char *file, const char **fullPath)
 {
-	int i = 0;
+	int i;
 	static struct stat sbuf;
 	char *fileName;
+
+	i = 0;
+
 	debug("finding file %s", file);
 	*fullPath = file;
 	if (0 == stat(file, &sbuf)) {
@@ -416,7 +479,10 @@ static INLINECALL int isFlagSet(int mode, int flag)
 
 static struct dlstatus *lookupStatus(const struct stat *sbuf)
 {
-	struct dlstatus *dls = stqueue;
+	struct dlstatus *dls;
+
+	dls = stqueue;
+
 	debug("looking for status");
 	while (dls && ( /* isFlagSet(dls->mode, RTLD_UNSHARED) */ 0
 				   || sbuf->st_dev != dls->device || sbuf->st_ino != dls->inode)) {
@@ -459,7 +525,10 @@ static int promoteLocalToGlobal(struct dlstatus *dls)
 	static int (*p) (NSModule module) = 0;
 	debug("promoting");
 	if (!p) {
-		_dyld_func_lookup("__dyld_NSMakePrivateModulePublic", (unsigned long *)&p);
+		/* The cast to (unsigned long *) here produced a warning: */
+		_dyld_func_lookup("__dyld_NSMakePrivateModulePublic", (void **)(unsigned long *)&p);
+		/* adding another cast on top of the first one to silence the warning
+		 * was kind of a hack... */
 	}
 	return (dls->module == MAGIC_DYLIB_MOD) || (p && p(dls->module));
 }
@@ -488,10 +557,15 @@ static void *reference(struct dlstatus *dls, int mode)
 
 static const struct mach_header *my_find_image(const char *name)
 {
-	const struct mach_header *mh = 0;
-	const char *id = NULL;
-	int i = _dyld_image_count();
+	const struct mach_header *mh;
+	const char *id;
+	int i;
 	int j;
+
+	mh = 0;
+	id = NULL;
+	i = _dyld_image_count();
+
 	mh = (struct mach_header *)
 		dyld_NSAddImage(name, NSADDIMAGE_OPTION_RETURN_ONLY_IF_LOADED |
 						NSADDIMAGE_OPTION_RETURN_ON_ERROR);
@@ -517,21 +591,24 @@ static const struct mach_header *my_find_image(const char *name)
 NSSymbol *search_linked_libs(const struct mach_header * mh, const char *symbol)
 {
 	int n;
-	struct load_command *lc = 0;
+	struct load_command *lc;
 	struct mach_header *wh;
-	NSSymbol *nssym = 0;
+	NSSymbol *nssym;
+
+	lc = 0;
+	nssym = 0;
+
 	if (dyld_NSAddImage && dyld_NSIsSymbolNameDefinedInImage && dyld_NSLookupSymbolInImage) {
 		lc = (struct load_command *)((char *)mh + sizeof(struct mach_header));
-		for (n = 0; n < mh->ncmds; n++, lc = (struct load_command *)((char *)lc + lc->cmdsize)) {
+		for (n = (int)0; n < (int)mh->ncmds; n++, lc = (struct load_command *)((char *)lc + lc->cmdsize)) {
 			if ((LC_LOAD_DYLIB == lc->cmd) || (LC_LOAD_WEAK_DYLIB == lc->cmd)) {
 				if ((wh = (struct mach_header *)
 					 my_find_image((char *)(((struct dylib_command *)lc)->dylib.name.offset +
 											(char *)lc)))) {
 					if (dyld_NSIsSymbolNameDefinedInImage(wh, symbol)) {
-						nssym = dyld_NSLookupSymbolInImage(wh,
-														   symbol,
-														   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
-														   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+						nssym = (NSSymbol *)dyld_NSLookupSymbolInImage(wh, symbol,
+																	   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
+																	   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 						break;
 					}
 				}
@@ -552,7 +629,10 @@ static INLINECALL const char *dyld_error_str()
 	int dylderno;
 	const char *dylderrstr;
 	const char *dyldfile;
-	const char* retStr = NULL;
+	const char* retStr;
+
+	retStr = NULL;
+
 	NSLinkEditError(&dylder, &dylderno, &dyldfile, &dylderrstr);
 	if (dylderrstr && strlen(dylderrstr)) {
 		retStr = malloc(strlen(dylderrstr) +1);
@@ -563,10 +643,16 @@ static INLINECALL const char *dyld_error_str()
 
 static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetError)
 {
-	NSSymbol *nssym = 0;
-	void *caller = __builtin_return_address(1);	/* Be *very* careful about inlining */
-	const struct mach_header *caller_mh = 0;
-	const char* savedErrorStr = NULL;
+	NSSymbol *nssym;
+	void *caller; /* Be *very* careful about inlining */
+	const struct mach_header *caller_mh;
+	const char* savedErrorStr;
+
+	nssym = 0;
+	caller = __builtin_return_address(1); /* Be *very* careful about inlining */
+	caller_mh = 0;
+	savedErrorStr = NULL;
+
 	resetdlerror();
 #ifndef RTLD_SELF
 # define RTLD_SELF ((void *) -3)
@@ -583,10 +669,9 @@ static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetErr
 				 * this is acceptable.
 				 */
 				if (dyld_NSIsSymbolNameDefinedInImage(caller_mh, symbol)) {
-					nssym = dyld_NSLookupSymbolInImage(caller_mh,
-													   symbol,
-													   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
-													   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+					nssym = (NSSymbol *)dyld_NSLookupSymbolInImage(caller_mh, symbol,
+																   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
+																   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 				}
 			}
 			if (!nssym) {
@@ -611,18 +696,17 @@ static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetErr
 		}
 
 		if (dls->module != MAGIC_DYLIB_MOD) {
-			nssym = NSLookupSymbolInModule(dls->module, symbol);
+			nssym = (NSSymbol *)NSLookupSymbolInModule(dls->module, symbol);
 			if (!nssym && NSIsSymbolNameDefined(symbol)) {
 				debug("Searching dependencies");
 				savedErrorStr = dyld_error_str();
-				nssym = search_linked_libs(get_mach_header_from_NSModule(dls->module), symbol);
+				nssym = (NSSymbol *)search_linked_libs(get_mach_header_from_NSModule((NSModule *)dls->module), symbol);
 			}
 		} else if (dls->lib && dyld_NSIsSymbolNameDefinedInImage && dyld_NSLookupSymbolInImage) {
 			if (dyld_NSIsSymbolNameDefinedInImage(dls->lib, symbol)) {
-				nssym = dyld_NSLookupSymbolInImage(dls->lib,
-												   symbol,
-												   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
-												   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+				nssym = (NSSymbol *)dyld_NSLookupSymbolInImage(dls->lib, symbol,
+															   NSLOOKUPSYMBOLINIMAGE_OPTION_BIND |
+															   NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
 			} else if (NSIsSymbolNameDefined(symbol)) {
 				debug("Searching dependencies");
 				savedErrorStr = dyld_error_str();
@@ -634,7 +718,7 @@ static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetErr
 				/* There does NOT seem to be a return on error option for this call???
 				 * this is potentially broken, if binding fails, it will improperly
 				 * exit the application. */
-				nssym = NSLookupAndBindSymbol(symbol);
+				nssym = (NSSymbol *)NSLookupAndBindSymbol(symbol);
 			} else {
 				if (savedErrorStr) {
 					free((char*)savedErrorStr);
@@ -663,12 +747,12 @@ static void *dlsymIntern(struct dlstatus *dls, const char *symbol, int canSetErr
 		}
 		return NULL;
 	}
-	return NSAddressOfSymbol(nssym);
+	return NSAddressOfSymbol((NSSymbol)nssym);
 }
 
 static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, int mode)
 {
-	NSObjectFileImage ofi = 0;
+	NSObjectFileImage ofi;
 	NSObjectFileImageReturnCode ofirc;
 	struct dlstatus *dls;
 	NSLinkEditErrors ler;
@@ -676,9 +760,11 @@ static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, in
 	const char *errstr;
 	const char *file;
 	void (*init) (void);
+
+	ofi = 0;
 	ofirc = NSCreateObjectFileImageFromFile(path, &ofi);
-	switch (ofirc)
-	{
+
+	switch (ofirc) {
 		case NSObjectFileImageSuccess:
 			break;
 		case NSObjectFileImageInappropriateFile:
@@ -747,7 +833,7 @@ static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, in
 								   (isFlagSet(mode, RTLD_NOW) ? NSLINKMODULE_OPTION_BINDNOW : 0));
 		NSDestroyObjectFileImage(ofi);
 		if (dls->module) {
-			dls->lib = get_mach_header_from_NSModule(dls->module);
+			dls->lib = get_mach_header_from_NSModule((NSModule *)dls->module);
 		}
 	}
 	if (!dls->module) {
@@ -759,9 +845,16 @@ static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, in
 		return NULL;
 	}
 
+	/* dummy to silence clang static analyzer warning about value stored to
+	 * 'ofirc' never being read (above): */
+	if (ofirc == NSObjectFileImageSuccess) {
+		;
+	}
+
 	insertStatus(dls, sbuf);
 	dls = reference(dls, mode);
-	if ((init = dlsymIntern(dls, "__init", 0))) {
+	/* the casting here silences a warning for clang, but not for GCC: */
+	if ((init = (void (*)(void))dlsymIntern(dls, "__init", 0))) {
 		debug("calling _init()");
 		init();
 	}
@@ -770,13 +863,17 @@ static struct dlstatus *loadModule(const char *path, const struct stat *sbuf, in
 
 static void dlcompat_init_func(void)
 {
-	static int inited = 0;
+	static int inited;
+
+	inited = 0;
+
 	if (!inited) {
 		inited = 1;
-		_dyld_func_lookup("__dyld_NSAddImage", (unsigned long *)&dyld_NSAddImage);
+		/* see previous note about casting parameter to _dyld_func_lookup(): */
+		_dyld_func_lookup("__dyld_NSAddImage", (void **)(unsigned long *)&dyld_NSAddImage);
 		_dyld_func_lookup("__dyld_NSIsSymbolNameDefinedInImage",
-						  (unsigned long *)&dyld_NSIsSymbolNameDefinedInImage);
-		_dyld_func_lookup("__dyld_NSLookupSymbolInImage", (unsigned long *)&dyld_NSLookupSymbolInImage);
+						  (void **)(unsigned long *)&dyld_NSIsSymbolNameDefinedInImage);
+		_dyld_func_lookup("__dyld_NSLookupSymbolInImage", (void **)(unsigned long *)&dyld_NSLookupSymbolInImage);
 		if (pthread_mutex_init(&dlcompat_mutex, NULL)) {
 			exit(1);
 		}
@@ -788,14 +885,21 @@ static void dlcompat_init_func(void)
 	}
 }
 
-#pragma CALL_ON_LOAD dlcompat_init_func
+/* TODO: implement an autoconf check that actually checks for this: */
+#if defined(CALL_ON_LOAD) || defined(HAVE_PRAGMA_CALL_ON_LOAD)
+# pragma CALL_ON_LOAD dlcompat_init_func
+#else
+# define CALL_ON_LOAD_PRAGMA_IGNORED 1
+#endif /* CALL_ON_LOAD || HAVE_PRAGMA_CALL_ON_LOAD */
 
 static void dlcompat_cleanup(void)
 {
 	struct dlstatus *dls;
 	struct dlstatus *next;
 	char *data;
+
 	data = (char *)searchList();
+
 	if ( data ) {
 		free( data );
 	}
@@ -831,8 +935,11 @@ static void dlerrorfree(void *data)
  */
 static INLINECALL void dolock(void)
 {
-	int err = 0;
+	int err;
 	struct dlthread *tss;
+
+	err = 0;
+
 	tss = pthread_getspecific(dlerror_key);
 	if (!tss) {
 		tss = malloc(sizeof(struct dlthread));
@@ -854,7 +961,10 @@ static INLINECALL void dolock(void)
 
 static INLINECALL void dounlock(void)
 {
-	int err = 0;
+	int err;
+
+	err = 0;
+
 	struct dlthread *tss;
 	tss = pthread_getspecific(dlerror_key);
 	tss->lockcnt = tss->lockcnt -1;
@@ -871,7 +981,8 @@ void *dlopen(const char *path, int mode)
 	const struct stat *sbuf;
 	struct dlstatus *dls;
 	const char *fullPath;
-	dlcompat_init_func();		/* Just in case */
+
+	dlcompat_init_func(); /* Just in case */
 	dolock();
 	resetdlerror();
 	if (!path) {
@@ -913,9 +1024,14 @@ void *dlopen(const char *path, int mode)
 #if !FINK_BUILD
 void *dlsym(void * dl_restrict handle, const char * dl_restrict symbol)
 {
-	int sym_len = strlen(symbol);
-	void *value = NULL;
-	char *malloc_sym = NULL;
+	int sym_len;
+	void *value;
+	char *malloc_sym;
+
+	sym_len = (int)strlen(symbol);
+	value = NULL;
+	malloc_sym = NULL;
+
 	dolock();
 	malloc_sym = malloc(sym_len + 2);
 	if (malloc_sym) {
@@ -956,9 +1072,14 @@ static void *dlsym_prepend_underscore_intern(void *handle, const char *symbol)
  *	the underscore always, or not at all. These global functions need to go away
  *	for opendarwin.
  */
-	int sym_len = strlen(symbol);
-	void *value = NULL;
-	char *malloc_sym = NULL;
+	int sym_len;
+	void *value;
+	char *malloc_sym;
+
+	sym_len = (int)strlen(symbol);
+	value = NULL;
+	malloc_sym = NULL;
+
 	malloc_sym = malloc(sym_len + 2);
 	if (malloc_sym) {
 		sprintf(malloc_sym, "_%s", symbol);
@@ -981,8 +1102,12 @@ void *dlsym_auto_underscore(void *handle, const char *symbol)
 }
 static void *dlsym_auto_underscore_intern(void *handle, const char *symbol)
 {
-	struct dlstatus *dls = handle;
-	void *addr = 0;
+	struct dlstatus *dls;
+	void *addr;
+
+	dls = handle;
+	addr = 0;
+
 	addr = dlsymIntern(dls, symbol, 0);
 	if (!addr) {
 		addr = dlsym_prepend_underscore_intern(handle, symbol);
@@ -993,8 +1118,12 @@ static void *dlsym_auto_underscore_intern(void *handle, const char *symbol)
 
 void *dlsym(void * dl_restrict handle, const char * dl_restrict symbol)
 {
-	struct dlstatus *dls = handle;
-	void *addr = 0;
+	struct dlstatus *dls;
+	void *addr;
+
+	dls = handle;
+	addr = 0;
+
 	dolock();
 	addr = dlsymIntern(dls, symbol, 1);
 	dounlock();
@@ -1004,7 +1133,10 @@ void *dlsym(void * dl_restrict handle, const char * dl_restrict symbol)
 
 int dlclose(void *handle)
 {
-	struct dlstatus *dls = handle;
+	struct dlstatus *dls;
+
+	dls = handle;
+
 	dolock();
 	resetdlerror();
 	if (!isValidStatus(dls)) {
@@ -1029,30 +1161,32 @@ int dlclose(void *handle)
 	if (dls->refs == 1) {
 		unsigned long options = 0;
 		void (*fini) (void);
-		if ((fini = dlsymIntern(dls, "__fini", 0))) {
+		/* the casting here silences a warning for clang, but not for GCC: */
+		if ((fini = (void (*)(void))dlsymIntern(dls, "__fini", 0))) {
 			debug("calling _fini()");
 			fini();
 		}
 #ifdef __ppc__
 		options |= NSUNLINKMODULE_OPTION_RESET_LAZY_REFERENCES;
 #endif /* __ppc__ */
-#if 1
+#if 1 || __cplusplus
 /*  Currently, if a module contains c++ static destructors and it is unloaded, we
  *  get a segfault in atexit(), due to compiler and dynamic loader differences of
  *  opinion, this works around that.
  *  I really need a way to figure out from code if this is still necessary.
  */
 		if ((const struct section *)NULL !=
-			getsectbynamefromheader(get_mach_header_from_NSModule(dls->module),
+			getsectbynamefromheader(get_mach_header_from_NSModule((NSModule *)dls->module),
 									"__DATA", "__mod_term_func")) {
 			options |= NSUNLINKMODULE_OPTION_KEEP_MEMORY_MAPPED;
 		}
-#endif /* 1 */
+#endif /* 1 || __cplusplus */
 #ifdef RTLD_NODELETE
-		if (isFlagSet(dls->mode, RTLD_NODELETE))
+		if (isFlagSet(dls->mode, RTLD_NODELETE)) {
 			options |= NSUNLINKMODULE_OPTION_KEEP_MEMORY_MAPPED;
+		}
 #endif /* RTLD_NODELETE */
-		if (!NSUnLinkModule(dls->module, options)) {
+		if (!NSUnLinkModule(dls->module, (uint32_t)options)) {
 			error("unable to unlink module");
 			goto dlcloseerror;
 		}
@@ -1073,15 +1207,34 @@ int dlclose(void *handle)
 const char *dlerror(void)
 {
 	struct dlthread  *tss;
+#if !defined(err_str) && !defined(ERR_STR_GLOBALLY_DEFINED)
 	char * err_str;
+#else
+	/* err_str should already be defined in this case: */
+	char * new_err_str;
+	new_err_str = err_str;
+	/* dummy to silence clang static analyzer warning about value stored to
+	 * 'new_err_str' never being read: */
+	if (new_err_str == err_str) {
+		;
+	}
+#endif /* !err_str && !ERR_STR_GLOBALLY_DEFINED */
 	tss = pthread_getspecific(dlerror_key);
+#ifndef ERR_STR_GLOBALLY_DEFINED
 	err_str = tss->errstr;
+#else
+	new_err_str = tss->errstr;
+#endif /* !ERR_STR_GLOBALLY_DEFINED */
 	tss = pthread_getspecific(dlerror_key);
 	if (tss->errset == 0) {
 		return 0;
 	}
 	tss->errset = 0;
+#ifndef ERR_STR_GLOBALLY_DEFINED
 	return (err_str );
+#else
+	return (new_err_str );
+#endif /* !ERR_STR_GLOBALLY_DEFINED */
 }
 
 /* Given an address, return the mach_header for the image containing it
@@ -1091,13 +1244,25 @@ const struct mach_header *image_for_address(const void *address)
 {
 	unsigned long i;
 	unsigned long j;
-	unsigned long count = _dyld_image_count();
-	struct mach_header *mh = 0;
-	struct load_command *lc = 0;
-	unsigned long addr = NULL;
+	unsigned long count;
+	struct mach_header *mh;
+	struct load_command *lc;
+	unsigned long addr;
+
+	count = _dyld_image_count();
+	mh = 0;
+	lc = 0;
+	addr = (unsigned long)NULL;
+
+	/* dummy to silence clang static analyzer warning about value stored to
+	 * 'addr' never being read: */
+	if (addr == (unsigned long)NULL) {
+		;
+	}
+
 	for (i = 0; i < count; i++) {
-		addr = (unsigned long)address - _dyld_get_image_vmaddr_slide(i);
-		mh = _dyld_get_image_header(i);
+		addr = (unsigned long)address - _dyld_get_image_vmaddr_slide((uint32_t)i);
+		mh = (struct mach_header *)_dyld_get_image_header((uint32_t)i);
 		if (mh) {
 			lc = (struct load_command *)((char *)mh + sizeof(struct mach_header));
 			for (j = 0; j < mh->ncmds; j++, lc = (struct load_command *)((char *)lc + lc->cmdsize)) {
@@ -1118,16 +1283,29 @@ const struct mach_header *image_for_address(const void *address)
 int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 {
 /*
- *	FIXME: USe the routine image_for_address.
+ *	FIXME: Use the routine image_for_address.
  */
 	unsigned long i;
 	unsigned long j;
-	unsigned long count = _dyld_image_count();
-	struct mach_header *mh = 0;
-	struct load_command *lc = 0;
-	unsigned long addr = NULL;
-	unsigned long table_off = (unsigned long)0;
-	int found = 0;
+	unsigned long count;
+	struct mach_header *mh;
+	struct load_command *lc;
+	unsigned long addr;
+	unsigned long table_off;
+	int found;
+
+	count = _dyld_image_count();
+	mh = 0;
+	lc = 0;
+	addr = (unsigned long)NULL;
+	table_off = (unsigned long)0;
+	found = 0;
+
+	/* dummy to silence clang static analyzer warning about value stored to
+	 * 'table_off' never being read: */
+	if (table_off == 0) {
+		;
+	}
 	if (!info) {
 		return 0;
 	}
@@ -1141,8 +1319,8 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
  * to darwin-development AT lists DOT apple DOT com and slightly modified
  */
 	for (i = 0; i < count; i++) {
-		addr = (unsigned long)p - _dyld_get_image_vmaddr_slide(i);
-		mh = _dyld_get_image_header(i);
+		addr = (unsigned long)p - (unsigned long)_dyld_get_image_vmaddr_slide((uint32_t)i);
+		mh = (struct mach_header *)_dyld_get_image_header((uint32_t)i);
 		if (mh) {
 			lc = (struct load_command *)((char *)mh + sizeof(struct mach_header));
 			for (j = 0; j < mh->ncmds; j++, lc = (struct load_command *)((char *)lc + lc->cmdsize)) {
@@ -1150,7 +1328,7 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 					addr >= ((struct segment_command *)lc)->vmaddr &&
 					addr <
 					((struct segment_command *)lc)->vmaddr + ((struct segment_command *)lc)->vmsize) {
-					info->dli_fname = _dyld_get_image_name(i);
+					info->dli_fname = _dyld_get_image_name((uint32_t)i);
 					info->dli_fbase = (void *)mh;
 					found = 1;
 					break;
@@ -1175,7 +1353,7 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 	}
 	table_off =
 		((unsigned long)((struct segment_command *)lc)->vmaddr) -
-		((unsigned long)((struct segment_command *)lc)->fileoff) + _dyld_get_image_vmaddr_slide(i);
+		((unsigned long)((struct segment_command *)lc)->fileoff) + _dyld_get_image_vmaddr_slide((uint32_t)i);
 	debug("table off %x", table_off);
 
 	lc = (struct load_command *)((char *)mh + sizeof(struct mach_header));
@@ -1203,7 +1381,11 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 				symtable++;
 			}
 			if (nearest) {
+#if __GNUC__ && !__STRICT_ANSI__ && !__STDC__
 				info->dli_saddr = nearest->n_value + ((void *)p - addr);
+#else
+				info->dli_saddr = nearest->n_value + ((char*)p - addr);
+#endif /* __GNUC__ && !__STRICT_ANSI__ && !__STDC__ */
 				info->dli_sname = (char *)(strtable + nearest->n_un.n_strx);
 			}
 		}
@@ -1229,8 +1411,12 @@ dlfunc_t dlfunc(void * dl_restrict handle, const char * dl_restrict symbol)
 		void *d;
 		dlfunc_t f;
 	} rv;
-	int sym_len = strlen(symbol);
-	char *malloc_sym = NULL;
+	int sym_len;
+	char *malloc_sym;
+
+	sym_len = (int)strlen(symbol);
+	malloc_sym = NULL;
+
 	dolock();
 	malloc_sym = malloc(sym_len + 2);
 	if (malloc_sym) {

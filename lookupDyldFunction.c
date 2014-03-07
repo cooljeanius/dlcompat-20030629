@@ -122,8 +122,9 @@ bool lookupDyldFunction(const char* name, uintptr_t* address)
 	for (p = dyld_funcs; p->name != NULL; ++p) {
 	    if ( strcmp(p->name, name) == 0 ) {
 			/* not sure if I can use unimplemented() like this... should I put
-			 * quotes around it to make it a string? Or cast it? */
-			if( p->implementation == unimplemented ) {
+			 * quotes around it to make it a string? Or cast it? Or both?
+			 * (the current method silences warnings from clang, but NOT from GCC) */
+			if( p->implementation == (const char *)((const char *)unimplemented || "unimplemented")) {
 				printf("unimplemented dyld function: %s\n", p->name);
 			}
 			*address = (uintptr_t)p->implementation;

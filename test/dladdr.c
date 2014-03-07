@@ -9,21 +9,39 @@
 
 int main(int argc, const char* argv[])
 {
-	int retCode = 0;
+	int retCode;
 	const char * syms[] = {"_printf","_dlopen","_main",0};
-	int i=0;
+	int i;
 	struct dl_info info;
 	NSSymbol syml;
 	void* addr;
+
+	retCode = 0;
+	i = 0;
+
+	printf("This program has the path %s and is running with %i arguments", argv[0], argc); /* use argc and argv */
+
 	while (syms[i]) {
 		syml = NSLookupAndBindSymbol(syms[i]);
 		if (syml) {
 			addr = NSAddressOfSymbol(syml);
 			dladdr(addr,&info);
-			fprintf(stdout,"Symbol: %s\nNSSym: %x\nAddress: %x\nFName: %s\nBase: %x\nSymbol: %s\nAddress: %x\n\n\n",
-				syms[i],syml,addr,info.dli_fname,info.dli_fbase,info.dli_sname,info.dli_saddr);
-			if (addr != info.dli_saddr) retCode++;
-			if (strcmp(syms[i],info.dli_sname)) retCode++;
+			/* the casts in the arguments to fprintf() here silence clang warnings,
+			 * but create new GCC ones... */
+			fprintf(stdout,"Symbol: %s\nN SSym: %x\n Address: %x\n FName: %s\n Base: %x\n Symbol: %s\n Address: %x\n\n\n",
+					syms[i], /* value for formatter 1 ("Symbol:") */
+					(unsigned int)syml, /* value for formatter 2 ("SSym:") */
+					(unsigned int)addr, /* value for formatter 3 ("Address:") */
+					info.dli_fname, /* value for formatter 4 ("FName:") */
+					(unsigned int)info.dli_fbase, /* value for formatter 5 ("Base:") */
+					info.dli_sname, /* value for formatter 6 ("Symbol:") */
+					(unsigned int)info.dli_saddr); /* value for formatter 7 ("Address:") */
+			if (addr != info.dli_saddr) {
+				retCode++;
+			}
+			if (strcmp(syms[i],info.dli_sname)) {
+				retCode++;
+			}
 		}
 		i++;
 	}

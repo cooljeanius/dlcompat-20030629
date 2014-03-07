@@ -51,6 +51,32 @@ typedef struct dl_info {
         void            *dli_saddr;     /* Address of nearest symbol */
 } Dl_info;
 
+/* taken from FreeBSD's dlfcn.h: */
+#if !defined(dlfunc_t) && !defined(HAVE_DLFUNC_T)
+# if defined __FreeBSD__ || defined __APPLE__
+/*-
+ * The actual type declared by this typedef is immaterial, provided that
+ * it is a function pointer. Its purpose is to provide a return type for
+ * dlfunc() which can be cast to a function pointer type without depending
+ * on behavior undefined by the C standard, which might trigger a compiler
+ * diagnostic. We intentionally declare a unique type signature to force
+ * a diagnostic should the application not cast the return value of dlfunc()
+ * appropriately.
+ */
+struct __dlfunc_arg {
+	int	__dlfunc_dummy;
+};
+
+typedef	void (*dlfunc_t)(struct __dlfunc_arg);
+#  define HAVE_DLFUNC_T 1
+# endif /* __FreeBSD__ || __APPLE__ */
+#endif /* !dlfunc_t && !HAVE_DLFUNC_T */
+
+/* make the ifdefs for the prototype match those for the function itself: */
+#if 0 || ((__FreeBSD__ || __APPLE__) && (defined(HAVE_DLFUNC_T) || defined(dlfunc_t)))
+extern dlfunc_t dlfunc(void * dl_restrict handle, const char * dl_restrict symbol);
+#endif /* 0 || ((__FreeBSD__ || __APPLE__) && (defined(HAVE_DLFUNC_T) || defined(dlfunc_t))) */
+
 extern void * dlopen(const char *path, int mode);
 extern void * dlsym(void * dl_restrict handle, const char * dl_restrict symbol);
 extern const char * dlerror(void);

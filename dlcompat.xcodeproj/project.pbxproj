@@ -6,6 +6,22 @@
 	objectVersion = 45;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		A546663F18CA30490036819B /* dlcompat-all-tests */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = A546665918CA306F0036819B /* Build configuration list for PBXAggregateTarget "dlcompat-all-tests" */;
+			buildPhases = (
+			);
+			dependencies = (
+				A546664718CA304F0036819B /* PBXTargetDependency */,
+				A546664518CA304F0036819B /* PBXTargetDependency */,
+				A546664318CA304F0036819B /* PBXTargetDependency */,
+			);
+			name = "dlcompat-all-tests";
+			productName = "dlcompat-all-tests";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		A54662E618C92D160036819B /* dlfcn.h in Headers */ = {isa = PBXBuildFile; fileRef = A54662DB18C92D160036819B /* dlfcn.h */; };
 		A54662E718C92D160036819B /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = A54662DC18C92D160036819B /* error.h */; };
@@ -26,7 +42,37 @@
 		A546635218C930390036819B /* _dyld_func_lookup.c in Sources */ = {isa = PBXBuildFile; fileRef = A54662DE18C92D160036819B /* _dyld_func_lookup.c */; };
 		A546635318C930390036819B /* dlfcn_simple.c in Sources */ = {isa = PBXBuildFile; fileRef = A54662DF18C92D160036819B /* dlfcn_simple.c */; };
 		A546635618C930390036819B /* lookupDyldFunction.c in Sources */ = {isa = PBXBuildFile; fileRef = A54662E218C92D160036819B /* lookupDyldFunction.c */; };
+		A54665D218CA2BE90036819B /* dlmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = A546630C18C92DCB0036819B /* dlmodule.c */; };
+		A54665D418CA2BE90036819B /* libfoo.c in Sources */ = {isa = PBXBuildFile; fileRef = A546631318C92DCB0036819B /* libfoo.c */; };
+		A54665E318CA2C2D0036819B /* dlmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = A546630C18C92DCB0036819B /* dlmodule.c */; };
+		A54665E518CA2C2D0036819B /* libfoo.c in Sources */ = {isa = PBXBuildFile; fileRef = A546631318C92DCB0036819B /* libfoo.c */; };
+		A54665ED18CA2C560036819B /* dlsymtest.c in Sources */ = {isa = PBXBuildFile; fileRef = A546630E18C92DCB0036819B /* dlsymtest.c */; };
+		A54665EE18CA2C690036819B /* dladdr.c in Sources */ = {isa = PBXBuildFile; fileRef = A546630A18C92DCB0036819B /* dladdr.c */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A546664218CA304F0036819B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A54665CF18CA2BE90036819B /* dlcompat-dladdr-test */;
+			remoteInfo = "dlcompat-dladdr-test";
+		};
+		A546664418CA304F0036819B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A54665E018CA2C2D0036819B /* dlcompat-dlsymtest-test */;
+			remoteInfo = "dlcompat-dlsymtest-test";
+		};
+		A546664618CA304F0036819B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A546630018C92DBC0036819B /* dlcompat-dltest-test */;
+			remoteInfo = "dlcompat-dltest-test";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A54662DB18C92D160036819B /* dlfcn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dlfcn.h; sourceTree = "<group>"; };
@@ -50,8 +96,8 @@
 		A54662F818C92D5A0036819B /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		A54662F918C92D600036819B /* THANKS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = THANKS; sourceTree = "<group>"; };
 		A54662FA18C92D640036819B /* TODO */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TODO; sourceTree = "<group>"; };
-		A546630118C92DBC0036819B /* dlcompat-test.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dlcompat-test.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A546630218C92DBC0036819B /* dlcompat-test-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "dlcompat-test-Info.plist"; sourceTree = "<group>"; };
+		A546630118C92DBC0036819B /* dlcompat-dltest-test.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dlcompat-dltest-test.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A546630218C92DBC0036819B /* dlcompat-dltest-test-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "dlcompat-dltest-test-Info.plist"; sourceTree = "<group>"; };
 		A546630A18C92DCB0036819B /* dladdr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dladdr.c; sourceTree = "<group>"; };
 		A546630C18C92DCB0036819B /* dlmodule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dlmodule.c; sourceTree = "<group>"; };
 		A546630E18C92DCB0036819B /* dlsymtest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dlsymtest.c; sourceTree = "<group>"; };
@@ -59,6 +105,10 @@
 		A546631318C92DCB0036819B /* libfoo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = libfoo.c; sourceTree = "<group>"; };
 		A546634418C930060036819B /* config.h */ = {isa = PBXFileReference; comments = "If this file is missing, be sure that you have configured in the autotools way first.\n"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		A546635E18C930390036819B /* libdlcompat.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libdlcompat.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		A54665DA18CA2BE90036819B /* dlcompat-dladdr-test.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dlcompat-dladdr-test.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A54665EB18CA2C2D0036819B /* dlcompat-dlsymtest-test.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dlcompat-dlsymtest-test.octest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A54665FC18CA2CEA0036819B /* dlcompat-dlsymtest-test-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "dlcompat-dlsymtest-test-Info.plist"; sourceTree = "<group>"; };
+		A546660518CA2D360036819B /* dlcompat-dladdr-test-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "dlcompat-dladdr-test-Info.plist"; sourceTree = "<group>"; };
 		D2AAC0630554660B00DB518D /* libdlcompat.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libdlcompat.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -71,6 +121,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A546635A18C930390036819B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A54665D518CA2BE90036819B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A54665E618CA2C2D0036819B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -92,7 +156,9 @@
 			children = (
 				08FB7795FE84155DC02AAC07 /* Source */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
-				A546630218C92DBC0036819B /* dlcompat-test-Info.plist */,
+				A546660518CA2D360036819B /* dlcompat-dladdr-test-Info.plist */,
+				A546630218C92DBC0036819B /* dlcompat-dltest-test-Info.plist */,
+				A54665FC18CA2CEA0036819B /* dlcompat-dlsymtest-test-Info.plist */,
 			);
 			name = dlcompat;
 			sourceTree = "<group>";
@@ -131,8 +197,10 @@
 			isa = PBXGroup;
 			children = (
 				D2AAC0630554660B00DB518D /* libdlcompat.dylib */,
-				A546630118C92DBC0036819B /* dlcompat-test.octest */,
+				A546630118C92DBC0036819B /* dlcompat-dltest-test.octest */,
 				A546635E18C930390036819B /* libdlcompat.dylib */,
+				A54665DA18CA2BE90036819B /* dlcompat-dladdr-test.octest */,
+				A54665EB18CA2C2D0036819B /* dlcompat-dlsymtest-test.octest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,10 +242,41 @@
 		};
 /* End PBXHeadersBuildPhase section */
 
+/* Begin PBXLegacyTarget section */
+		A54665B118CA2AF90036819B /* make-dlcompat */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = A54665B818CA2B2C0036819B /* Build configuration list for PBXLegacyTarget "make-dlcompat" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "";
+			dependencies = (
+			);
+			name = "make-dlcompat";
+			passBuildSettingsInEnvironment = 1;
+			productName = "make-dlcompat";
+		};
+		A54665B918CA2B490036819B /* make-dlcompat-test */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = A54665BC18CA2B670036819B /* Build configuration list for PBXLegacyTarget "make-dlcompat-test" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SOURCE_ROOT)/test";
+			dependencies = (
+			);
+			name = "make-dlcompat-test";
+			passBuildSettingsInEnvironment = 1;
+			productName = "make-dlcompat-test";
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
-		A546630018C92DBC0036819B /* dlcompat-test */ = {
+		A546630018C92DBC0036819B /* dlcompat-dltest-test */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A546630518C92DBC0036819B /* Build configuration list for PBXNativeTarget "dlcompat-test" */;
+			buildConfigurationList = A546630518C92DBC0036819B /* Build configuration list for PBXNativeTarget "dlcompat-dltest-test" */;
 			buildPhases = (
 				A54662FC18C92DBC0036819B /* Resources */,
 				A54662FD18C92DBC0036819B /* Sources */,
@@ -188,9 +287,9 @@
 			);
 			dependencies = (
 			);
-			name = "dlcompat-test";
+			name = "dlcompat-dltest-test";
 			productName = "dlcompat-test";
-			productReference = A546630118C92DBC0036819B /* dlcompat-test.octest */;
+			productReference = A546630118C92DBC0036819B /* dlcompat-dltest-test.octest */;
 			productType = "com.apple.product-type.bundle";
 		};
 		A546634B18C930390036819B /* dlcompat_simple */ = {
@@ -209,6 +308,42 @@
 			productName = dlcompat;
 			productReference = A546635E18C930390036819B /* libdlcompat.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
+		};
+		A54665CF18CA2BE90036819B /* dlcompat-dladdr-test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A54665D718CA2BE90036819B /* Build configuration list for PBXNativeTarget "dlcompat-dladdr-test" */;
+			buildPhases = (
+				A54665D018CA2BE90036819B /* Resources */,
+				A54665D118CA2BE90036819B /* Sources */,
+				A54665D518CA2BE90036819B /* Frameworks */,
+				A54665D618CA2BE90036819B /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "dlcompat-dladdr-test";
+			productName = "dlcompat-test";
+			productReference = A54665DA18CA2BE90036819B /* dlcompat-dladdr-test.octest */;
+			productType = "com.apple.product-type.bundle";
+		};
+		A54665E018CA2C2D0036819B /* dlcompat-dlsymtest-test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A54665E818CA2C2D0036819B /* Build configuration list for PBXNativeTarget "dlcompat-dlsymtest-test" */;
+			buildPhases = (
+				A54665E118CA2C2D0036819B /* Resources */,
+				A54665E218CA2C2D0036819B /* Sources */,
+				A54665E618CA2C2D0036819B /* Frameworks */,
+				A54665E718CA2C2D0036819B /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "dlcompat-dlsymtest-test";
+			productName = "dlcompat-test";
+			productReference = A54665EB18CA2C2D0036819B /* dlcompat-dlsymtest-test.octest */;
+			productType = "com.apple.product-type.bundle";
 		};
 		D2AAC0620554660B00DB518D /* dlcompat */ = {
 			isa = PBXNativeTarget;
@@ -248,7 +383,12 @@
 			targets = (
 				D2AAC0620554660B00DB518D /* dlcompat */,
 				A546634B18C930390036819B /* dlcompat_simple */,
-				A546630018C92DBC0036819B /* dlcompat-test */,
+				A546630018C92DBC0036819B /* dlcompat-dltest-test */,
+				A54665E018CA2C2D0036819B /* dlcompat-dlsymtest-test */,
+				A54665CF18CA2BE90036819B /* dlcompat-dladdr-test */,
+				A54665B118CA2AF90036819B /* make-dlcompat */,
+				A54665B918CA2B490036819B /* make-dlcompat-test */,
+				A546663F18CA30490036819B /* dlcompat-all-tests */,
 			);
 		};
 /* End PBXProject section */
@@ -261,10 +401,50 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A54665D018CA2BE90036819B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A54665E118CA2C2D0036819B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		A54662FF18C92DBC0036819B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+		A54665D618CA2BE90036819B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+		A54665E718CA2C2D0036819B /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -300,6 +480,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A54665D118CA2BE90036819B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A54665D218CA2BE90036819B /* dlmodule.c in Sources */,
+				A54665EE18CA2C690036819B /* dladdr.c in Sources */,
+				A54665D418CA2BE90036819B /* libfoo.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A54665E218CA2C2D0036819B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A54665E318CA2C2D0036819B /* dlmodule.c in Sources */,
+				A54665ED18CA2C560036819B /* dlsymtest.c in Sources */,
+				A54665E518CA2C2D0036819B /* libfoo.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D2AAC0610554660B00DB518D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -316,6 +516,24 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A546664318CA304F0036819B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A54665CF18CA2BE90036819B /* dlcompat-dladdr-test */;
+			targetProxy = A546664218CA304F0036819B /* PBXContainerItemProxy */;
+		};
+		A546664518CA304F0036819B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A54665E018CA2C2D0036819B /* dlcompat-dlsymtest-test */;
+			targetProxy = A546664418CA304F0036819B /* PBXContainerItemProxy */;
+		};
+		A546664718CA304F0036819B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A546630018C92DBC0036819B /* dlcompat-dltest-test */;
+			targetProxy = A546664618CA304F0036819B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		1DEB914B08733D8E0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -327,6 +545,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = dlcompat;
 			};
@@ -339,6 +558,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_PREFIX = lib;
 				GCC_MODEL_TUNING = G5;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = dlcompat;
 			};
@@ -368,6 +588,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
 				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -394,6 +615,7 @@
 					"-Wall",
 					"-Wstrict-prototypes",
 					"-Wimplicit",
+					"-Wno-four-char-constants",
 				);
 			};
 			name = Debug;
@@ -411,10 +633,10 @@
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GENERATE_PKGINFO_FILE = YES;
 				LD_GENERATE_MAP_FILE = YES;
-				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
@@ -426,6 +648,7 @@
 					"-Wall",
 					"-Wstrict-prototypes",
 					"-Wimplicit",
+					"-Wno-four-char-constants",
 				);
 			};
 			name = Release;
@@ -448,7 +671,7 @@
 					"DEBUG=2",
 					"DL_MODULE_NUMBER=\\\"lib\\\"",
 				);
-				INFOPLIST_FILE = "dlcompat-test-Info.plist";
+				INFOPLIST_FILE = "dlcompat-dltest-test-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -457,7 +680,7 @@
 					SenTestingKit,
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = "dlcompat-test";
+				PRODUCT_NAME = "dlcompat-dltest-test";
 				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
@@ -479,7 +702,7 @@
 					HAVE_DECL_STRERROR_R,
 					"DL_MODULE_NUMBER=\\\"lib\\\"",
 				);
-				INFOPLIST_FILE = "dlcompat-test-Info.plist";
+				INFOPLIST_FILE = "dlcompat-dltest-test-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -488,7 +711,7 @@
 					SenTestingKit,
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = "dlcompat-test";
+				PRODUCT_NAME = "dlcompat-dltest-test";
 				WRAPPER_EXTENSION = octest;
 				ZERO_LINK = NO;
 			};
@@ -521,6 +744,197 @@
 			};
 			name = Release;
 		};
+		A54665B218CA2AF90036819B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = "make-dlcompat";
+			};
+			name = Debug;
+		};
+		A54665B318CA2AF90036819B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = "make-dlcompat";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		A54665BA18CA2B490036819B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = "make-dlcompat-test";
+			};
+			name = Debug;
+		};
+		A54665BB18CA2B490036819B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = "make-dlcompat-test";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		A54665D818CA2BE90036819B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					HAVE_CONFIG_H,
+					HAVE_DECL_STRERROR_R,
+					"DEBUG=2",
+					"DL_MODULE_NUMBER=\\\"lib\\\"",
+				);
+				INFOPLIST_FILE = "dlcompat-dladdr-test-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "dlcompat-dladdr-test";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		A54665D918CA2BE90036819B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_ENABLE_EXCEPTIONS = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					HAVE_CONFIG_H,
+					HAVE_DECL_STRERROR_R,
+					"DL_MODULE_NUMBER=\\\"lib\\\"",
+				);
+				INFOPLIST_FILE = "dlcompat-dladdr-test-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "dlcompat-dladdr-test";
+				WRAPPER_EXTENSION = octest;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		A54665E918CA2C2D0036819B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					HAVE_CONFIG_H,
+					HAVE_DECL_STRERROR_R,
+					"DEBUG=2",
+					"DL_MODULE_NUMBER=\\\"lib\\\"",
+				);
+				INFOPLIST_FILE = "dlcompat-dlsymtest-test-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "dlcompat-dlsymtest-test";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		A54665EA18CA2C2D0036819B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
+				GCC_ENABLE_EXCEPTIONS = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					HAVE_CONFIG_H,
+					HAVE_DECL_STRERROR_R,
+					"DL_MODULE_NUMBER=\\\"lib\\\"",
+				);
+				INFOPLIST_FILE = "dlcompat-dlsymtest-test-Info.plist";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Cocoa,
+					"-framework",
+					SenTestingKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = "dlcompat-dlsymtest-test";
+				WRAPPER_EXTENSION = octest;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		A546664018CA30490036819B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = "dlcompat-all-tests";
+			};
+			name = Debug;
+		};
+		A546664118CA30490036819B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = "dlcompat-all-tests";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -542,7 +956,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A546630518C92DBC0036819B /* Build configuration list for PBXNativeTarget "dlcompat-test" */ = {
+		A546630518C92DBC0036819B /* Build configuration list for PBXNativeTarget "dlcompat-dltest-test" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A546630318C92DBC0036819B /* Debug */,
@@ -556,6 +970,51 @@
 			buildConfigurations = (
 				A546635C18C930390036819B /* Debug */,
 				A546635D18C930390036819B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A54665B818CA2B2C0036819B /* Build configuration list for PBXLegacyTarget "make-dlcompat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A54665B218CA2AF90036819B /* Debug */,
+				A54665B318CA2AF90036819B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A54665BC18CA2B670036819B /* Build configuration list for PBXLegacyTarget "make-dlcompat-test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A54665BA18CA2B490036819B /* Debug */,
+				A54665BB18CA2B490036819B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A54665D718CA2BE90036819B /* Build configuration list for PBXNativeTarget "dlcompat-dladdr-test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A54665D818CA2BE90036819B /* Debug */,
+				A54665D918CA2BE90036819B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A54665E818CA2C2D0036819B /* Build configuration list for PBXNativeTarget "dlcompat-dlsymtest-test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A54665E918CA2C2D0036819B /* Debug */,
+				A54665EA18CA2C2D0036819B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A546665918CA306F0036819B /* Build configuration list for PBXAggregateTarget "dlcompat-all-tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A546664018CA30490036819B /* Debug */,
+				A546664118CA30490036819B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

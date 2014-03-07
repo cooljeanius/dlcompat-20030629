@@ -124,9 +124,9 @@ extern char *program_name;
 #  ifdef __inline__
 #   define INLINECALL __inline__
 #  else
-#   ifdef __NO_INLINE__
+#   if defined(__NO_INLINE__) && defined(__GNUC__) && !defined(__STDC__)
 #    warning "INLINECALL will be unavailable when using the '-ansi' compiler flag"
-#   endif /* __NO_INLINE__ */
+#   endif /* __NO_INLINE__ && __GNUC__ && !__STDC__ */
 #   define INLINECALL /* nothing */
 #  endif /* __inline__ */
 # else
