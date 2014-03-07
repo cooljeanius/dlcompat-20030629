@@ -11,11 +11,13 @@
 
 int main(int argc, const char* argv[])
 {
-	printf("This program has the path %s and is running with %i arguments", argv[0], argc); /* use argc and argv */
+	/* use argc and argv: */
+	printf("This program was invoked with path %s and is running with %i argument(s).\n\n", argv[0], argc);
 	dlsym(dlopen("dllib.dylib", RTLD_LAZY | RTLD_GLOBAL), "_init");
 	dlsym(RTLD_DEFAULT, "_init");
 	dlsym(RTLD_NEXT, "_init");
 	dlsym(RTLD_SELF, "_init");
+	/*TODO: make return code tied to result of dlsym tests instead of hardcoding it:*/
 	return 0;
 }
 

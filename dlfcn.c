@@ -1324,7 +1324,9 @@ int dladdr(const void * dl_restrict p, Dl_info * dl_restrict info)
 		if (mh) {
 			lc = (struct load_command *)((char *)mh + sizeof(struct mach_header));
 			for (j = 0; j < mh->ncmds; j++, lc = (struct load_command *)((char *)lc + lc->cmdsize)) {
-				if (LC_SEGMENT == lc->cmd && /* the dladdr test in the test subdirectory segfaults here... */
+				 /* the dladdr test in the test subdirectory used to segfault
+				  * here, but it seems to be fixed now? */
+				if (LC_SEGMENT == lc->cmd &&
 					addr >= ((struct segment_command *)lc)->vmaddr &&
 					addr <
 					((struct segment_command *)lc)->vmaddr + ((struct segment_command *)lc)->vmsize) {

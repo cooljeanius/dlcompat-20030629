@@ -10,7 +10,9 @@
 int main(int argc, const char* argv[])
 {
 	int retCode;
+	/* the underscores here are making this test fail: */
 	const char * syms[] = {"_printf","_dlopen","_main",0};
+	/* (I assume the "0" at the end is to break out of the "while" loop below...) */
 	int i;
 	struct dl_info info;
 	NSSymbol syml;
@@ -19,16 +21,19 @@ int main(int argc, const char* argv[])
 	retCode = 0;
 	i = 0;
 
-	printf("This program has the path %s and is running with %i arguments", argv[0], argc); /* use argc and argv */
+	/* use argc and argv: */
+	printf("This program was invoked with path %s and is running with %i argument(s).\n\n", argv[0], argc);
 
 	while (syms[i]) {
+		fprintf(stdout,"dladdr test #%i:\n",(i+1));
 		syml = NSLookupAndBindSymbol(syms[i]);
 		if (syml) {
 			addr = NSAddressOfSymbol(syml);
 			dladdr(addr,&info);
 			/* the casts in the arguments to fprintf() here silence clang warnings,
-			 * but create new GCC ones... */
-			fprintf(stdout,"Symbol: %s\nN SSym: %x\n Address: %x\n FName: %s\n Base: %x\n Symbol: %s\n Address: %x\n\n\n",
+			 * but create different GCC ones... */
+			fprintf(stdout,
+					"Symbol: %s\nN SSym: %x\n Address: %x\n FName: %s\n Base: %x\n Symbol: %s\n Address: %x\n\n\n",
 					syms[i], /* value for formatter 1 ("Symbol:") */
 					(unsigned int)syml, /* value for formatter 2 ("SSym:") */
 					(unsigned int)addr, /* value for formatter 3 ("Address:") */
@@ -37,13 +42,27 @@ int main(int argc, const char* argv[])
 					info.dli_sname, /* value for formatter 6 ("Symbol:") */
 					(unsigned int)info.dli_saddr); /* value for formatter 7 ("Address:") */
 			if (addr != info.dli_saddr) {
+				fprintf(stdout,
+						"Address1 (%x) did not match Address2 (%x), incrementing return code...\n\n",
+						(unsigned int)addr,
+						(unsigned int)info.dli_saddr);
 				retCode++;
 			}
 			if (strcmp(syms[i],info.dli_sname)) {
+				fprintf(stdout,
+						"Symbol1 (%s) did not match Symbol2 (%s), incrementing return code...\n\n",
+						syms[i],
+						info.dli_sname);
 				retCode++;
 			}
 		}
 		i++;
+	}
+	if (retCode != 0) {
+		fprintf(stderr,"Returning %i...\n", retCode);
+	} else {
+		/* 0 is good, so use stdout instead of stderr: */
+		fprintf(stdout,"Returning %i...\n", retCode);
 	}
 	return retCode;
 }

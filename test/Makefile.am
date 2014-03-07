@@ -55,6 +55,6 @@ DISTCLEANFILES = .DS_Store
 # use installcheck instead of check because it requires libdl to be
 # installed due to the use of the '-install_name' flag:
 installcheck-local: atlocal dlone.so dltwo.so dllib.dylib dllib.a dltest dladdr dlsymtest
-	test -e ./dladdr && ./dladdr
+	test -e ./dladdr && ./dladdr 2>&1
 	test -e ./dltest && ./dltest
 	test -e ./dlsymtest && ./dlsymtest
