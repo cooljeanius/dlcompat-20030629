@@ -47,6 +47,19 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include <mach-o/getsect.h>
+
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITY_H)
+# include <Availability.h>
+#else
+# warning "will not be able to do availability checks"
+#endif /* __APPLE__ || HAVE_AVAILABILITY_H */
+
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITYMACROS_H)
+# include <AvailabilityMacros.h>
+#else
+# warning "will not be able to do checks with availability macros"
+#endif /* __APPLE__ || HAVE_AVAILABILITYMACROS_H */
+
 /* Just playing to see if it would compile with the freebsd headers, it does,
  * but because of the different values for RTLD_LOCAL etc, it would break binary
  * compat... oh well
@@ -304,7 +317,7 @@ static const char *get_lib_name(const struct mach_header *mh)
 	return val;
 }
 
-/* Returns the mach_header for the module bu going through all the loaded images
+/* Returns the mach_header for the module by going through all the loaded images
  * and finding the one with the same name as the module. There really ought to be
  * an api for doing this, would be faster, but there was NOT one as of when this
  * was written...
@@ -891,6 +904,11 @@ static void dlcompat_init_func(void)
 	}
 }
 
+#if defined(__APPLE__) && defined(__GNUC__)
+# if (__GNUC__ < 4) && (__GNUC__ > 2)
+#  define HAVE_PRAGMA_CALL_ON_LOAD 1
+# endif /* GCC 3 */
+#endif /* Apple GCC */
 /* TODO: implement an autoconf check that actually checks for this: */
 #if defined(CALL_ON_LOAD) || defined(HAVE_PRAGMA_CALL_ON_LOAD)
 # pragma CALL_ON_LOAD dlcompat_init_func

@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<!-- saved from url=(0159)https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupSymbolInImage -->
+<html lang="en"><script type="text/javascript">window["_gaUserPrefs"] = { ioo : function() { return true; } }</script><script>(function main() {
+    // Create enabled event
+    function fireEnabledEvent() {
+        // If gli exists, then we are already present and shouldn't do anything
+        if (!window.gli) {
+            setTimeout(function () {
+                var enabledEvent = document.createEvent("Event");
+                enabledEvent.initEvent("WebGLEnabledEvent", true, true);
+                document.dispatchEvent(enabledEvent);
+            }, 0);
+        } else {
+            //console.log("WebGL Inspector already embedded on the page - disabling extension");
+        }
+    };
+
+    // Grab the path root from the extension
+    document.addEventListener("WebGLInspectorReadyEvent", function (e) {
+        var pathElement = document.getElementById("__webglpathroot");
+        if (window["gliloader"]) {
+            gliloader.pathRoot = pathElement.innerText;
+        } else {
+            // TODO: more?
+            window.gliCssUrl = pathElement.innerText + "gli.all.css";
+        }
+    }, false);
+
+    // Rewrite getContext to snoop for webgl
+    var originalGetContext = HTMLCanvasElement.prototype.getContext;
+    if (!HTMLCanvasElement.prototype.getContextRaw) {
+        HTMLCanvasElement.prototype.getContextRaw = originalGetContext;
+    }
+    HTMLCanvasElement.prototype.getContext = function () {
+        var ignoreCanvas = this.internalInspectorSurface;
+        if (ignoreCanvas) {
+            return originalGetContext.apply(this, arguments);
+        }
+
+        var result = originalGetContext.apply(this, arguments);
+        if (result == null) {
+            return null;
+        }
+
+        var contextNames = ["moz-webgl", "webkit-3d", "experimental-webgl", "webgl", "3d"];
+        var requestingWebGL = contextNames.indexOf(arguments[0]) != -1;
+        if (requestingWebGL) {
+            // Page is requesting a WebGL context!
+            fireEnabledEvent(this);
+
+            // If we are injected, inspect this context
+            if (window.gli) {
+                if (gli.host.inspectContext) {
+                    // TODO: pull options from extension
+                    result = gli.host.inspectContext(this, result);
+                    // NOTE: execute in a timeout so that if the dom is not yet
+                    // loaded this won't error out.
+                    window.setTimeout(function() {
+                        var hostUI = new gli.host.HostUI(result);
+                        result.hostUI = hostUI; // just so we can access it later for debugging
+                    }, 0);
+                }
+            }
+        }
+
+        return result;
+    };
+})();</script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>OS X ABI Dynamic Loader Reference</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=7">
+    <meta charset="utf-8">
+    <meta id="book-resource-type" name="book-resource-type" content="Reference">
+    <meta scheme="apple_ref" id="identifier" name="identifier" content="//apple_ref/doc/uid/TP40001398">
+	<meta id="document-version" name="document-version" content="3.1.1">
+    <meta id="build" name="build" content="c1b21060c3568d6e8e73c12bd3607386">
+    <meta id="chapterId" name="chapterId" content="TP40001398-Reference">
+    <meta id="date" name="date" content="2005-11-09">
+    <meta id="description" name="description" content="Describes the functions used to access Mach-O files.">
+    <meta id="book-title" name="book-title" content="OS X ABI Dynamic Loader Reference">
+    <meta id="book-name" name="book-name" content="MachOReference">
+    <meta id="book-root" name="book-root" content="../">
+    <meta id="book-json" name="book-json" content="../book.json">
+    <meta id="devcenter" name="devcenter" content="Mac Dev Center">
+    <meta id="devcenter-url" name="devcenter-url" content="http://developer.apple.com/devcenter/mac">
+    <meta id="reflib" name="reflib" content="Mac Developer Library">
+    <meta id="book-assignments" name="book-assignments" content="{Type/Reference}, {Topic/General}">
+    <meta name="pdf" contents="../MachOReference.pdf"><link id="book-pdf" media="print" rel="alternate" type="application/pdf" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/MachOReference.pdf">
+    
+    <meta id="generator" name="generator" content="Gutenberg bc32f2e6">
+    <meta name="numbat" content="aa879094b666337fdcde744b62fbff30">
+    <meta id="copyright" name="copyright" content="Copyright 2014 Apple Inc. All Rights Reserved.">
+    <meta id="xcode-display" name="xcode-display" content="render">
+    <meta id="IndexTitle" name="IndexTitle" content="OS X ABI Dynamic Loader Reference">
+    <meta id="resources-uri" name="resources-uri" content="../../../../../Resources/672">
+    <link id="book-index-page" rel="Start" title="OS X ABI Dynamic Loader Reference" type="text/html" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/index.html">
+    <link id="next-page" rel="Next" type="text/html" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/RevisionHistory/RevisionHistory.html">
+    <link id="previous-page" rel="Prev" type="text/html" href="">
+    <link rel="stylesheet" type="text/css" href="./OS X ABI Dynamic Loader Reference_files/screen.css">
+    
+    <link rel="stylesheet" type="text/css" href="./OS X ABI Dynamic Loader Reference_files/feedback.css">
+<style type="text/css"></style><meta name="chromesniffer" id="chromesniffer_meta" content="{&quot;Prototype&quot;:&quot;1.6.1&quot;}"><script type="text/javascript" src="chrome-extension://homgcnaoacgigpkkljjjekpignblkeae/detector.js"></script><script>window["_GOOG_TRANS_EXT_VER"] = "1";</script></head>    
+<body id=""><a name="//apple_ref/doc/uid/TP40001398-Reference" title="OS X ABI Dynamic Loader Reference"></a>
+    <div id="adcHeader" class="hideOnPrint hideInXcode">
+        <div id="ssi_Header" class="hideInXcode mac">
+            <a id="ssi_LibraryTitle" href="https://developer.apple.com/library/mac/navigation/">Mac Developer Library</a>
+            <a id="ssi_AppleDeveloperConnection" href="https://developer.apple.com/">Developer</a>
+            <div id="ssi_SearchButton" role="button" title="Search">Search</div>
+        </div>
+        <form id="ssi_SearchMenu" method="get" action="https://developer.apple.com/library/mac/search/" accept-charset="utf-8">
+            <label for="adcsearch">Search Mac Developer Library</label>
+            <input type="search" id="ssi_SearchField" name="q" accesskey="s" results="5">
+        </form>
+    </div>
+
+    <header id="header">
+        <div id="title" role="banner">
+            <h1>OS X ABI Dynamic Loader Reference</h1>
+            <span id="file_links">
+                <a id="PDF_link" role="button" tabindex="4" rel="alternate" title="Download PDF" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/MachOReference.pdf" class="visible"><span id="pdf_icon"></span>PDF</a>
+                <a id="Companion_link" role="button" tabindex="3" title="Download Companion File" class=""><span id="companion_icon"></span>Companion File</a>
+            </span>
+        </div>
+        <ul id="headerButtons" class="hideOnPrint" role="toolbar">
+            <li id="toc_button">
+                <button tabindex="5" id="table_of_contents" class="open" role="checkbox" aria-label="Show Table of Contents"><span class="disclosure"></span>Table of Contents</button>
+            </li>
+            <li id="jumpto_button" role="navigation"><select tabindex="6" id="jumpTo"><option value="top">Jump To…</option><option value="//apple_ref/doc/uid/TP40001414-DontLinkElementID_3">Overview</option><option value="//apple_ref/doc/uid/TP40001398-Reference-DontLinkElementID_4">Functions by Task</option><option value="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF107">Functions</option><option value="jumpTo_3">&nbsp;&nbsp;&nbsp;&nbsp;dladdr</option><option value="jumpTo_4">&nbsp;&nbsp;&nbsp;&nbsp;dlclose</option><option value="jumpTo_5">&nbsp;&nbsp;&nbsp;&nbsp;dlerror</option><option value="jumpTo_6">&nbsp;&nbsp;&nbsp;&nbsp;dlopen</option><option value="jumpTo_7">&nbsp;&nbsp;&nbsp;&nbsp;dlsym</option><option value="jumpTo_8">&nbsp;&nbsp;&nbsp;&nbsp;dyld_stub_binding_helper</option><option value="jumpTo_9">&nbsp;&nbsp;&nbsp;&nbsp;getsectbyname</option><option value="jumpTo_10">&nbsp;&nbsp;&nbsp;&nbsp;getsectbynamefromheader</option><option value="jumpTo_11">&nbsp;&nbsp;&nbsp;&nbsp;getsectbynamefromheader_64</option><option value="jumpTo_12">&nbsp;&nbsp;&nbsp;&nbsp;getsectdata</option><option value="jumpTo_13">&nbsp;&nbsp;&nbsp;&nbsp;getsectdatafromFramework</option><option value="jumpTo_14">&nbsp;&nbsp;&nbsp;&nbsp;getsectdatafromheader</option><option value="jumpTo_15">&nbsp;&nbsp;&nbsp;&nbsp;getsectdatafromheader_64</option><option value="jumpTo_16">&nbsp;&nbsp;&nbsp;&nbsp;getsegbyname</option><option value="jumpTo_17">&nbsp;&nbsp;&nbsp;&nbsp;NSAddImage</option><option value="jumpTo_18">&nbsp;&nbsp;&nbsp;&nbsp;NSAddLibrary</option><option value="jumpTo_19">&nbsp;&nbsp;&nbsp;&nbsp;NSAddLibraryWithSearching</option><option value="jumpTo_20">&nbsp;&nbsp;&nbsp;&nbsp;NSAddressOfSymbol</option><option value="jumpTo_21">&nbsp;&nbsp;&nbsp;&nbsp;NSCreateObjectFileImageFromFile</option><option value="jumpTo_22">&nbsp;&nbsp;&nbsp;&nbsp;NSCreateObjectFileImageFromMemory</option><option value="jumpTo_23">&nbsp;&nbsp;&nbsp;&nbsp;NSDestroyObjectFileImage</option><option value="jumpTo_24">&nbsp;&nbsp;&nbsp;&nbsp;NSIsSymbolNameDefined</option><option value="jumpTo_25">&nbsp;&nbsp;&nbsp;&nbsp;NSIsSymbolNameDefinedInImage</option><option value="jumpTo_26">&nbsp;&nbsp;&nbsp;&nbsp;NSIsSymbolNameDefinedWithHint</option><option value="jumpTo_27">&nbsp;&nbsp;&nbsp;&nbsp;NSLibraryNameForModule</option><option value="jumpTo_28">&nbsp;&nbsp;&nbsp;&nbsp;NSLinkModule</option><option value="jumpTo_29">&nbsp;&nbsp;&nbsp;&nbsp;NSLookupAndBindSymbol</option><option value="jumpTo_30">&nbsp;&nbsp;&nbsp;&nbsp;NSLookupAndBindSymbolWithHint</option><option value="jumpTo_31">&nbsp;&nbsp;&nbsp;&nbsp;NSLookupSymbolInImage</option><option value="jumpTo_32">&nbsp;&nbsp;&nbsp;&nbsp;NSLookupSymbolInModule</option><option value="jumpTo_33">&nbsp;&nbsp;&nbsp;&nbsp;NSModuleForSymbol</option><option value="jumpTo_34">&nbsp;&nbsp;&nbsp;&nbsp;NSNameOfModule</option><option value="jumpTo_35">&nbsp;&nbsp;&nbsp;&nbsp;NSNameOfSymbol</option><option value="jumpTo_36">&nbsp;&nbsp;&nbsp;&nbsp;NSUnLinkModule</option><option value="jumpTo_37">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_bind_fully_image_containing_address</option><option value="jumpTo_38">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_bind_objc_module</option><option value="jumpTo_39">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_func_lookup</option><option value="jumpTo_40">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_get_image_header</option><option value="jumpTo_41">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_get_image_name</option><option value="jumpTo_42">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_get_image_vmaddr_slide</option><option value="jumpTo_43">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_get_objc_module_sect_for_module</option><option value="jumpTo_44">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_image_containing_address</option><option value="jumpTo_45">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_image_count</option><option value="jumpTo_46">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_launched_prebound</option><option value="jumpTo_47">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_lookup_and_bind</option><option value="jumpTo_48">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_lookup_and_bind_fully</option><option value="jumpTo_49">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_lookup_and_bind_objc</option><option value="jumpTo_50">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_lookup_and_bind_with_hint</option><option value="jumpTo_51">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_moninit</option><option value="jumpTo_52">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_present</option><option value="jumpTo_53">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_register_func_for_add_image</option><option value="jumpTo_54">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_register_func_for_link_module</option><option value="jumpTo_55">&nbsp;&nbsp;&nbsp;&nbsp;_dyld_register_func_for_remove_image</option><option value="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_5">Constants</option><option value="jumpTo_57">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageSuccess</option><option value="jumpTo_58">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageFailure</option><option value="jumpTo_59">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageInappropriateFile</option><option value="jumpTo_60">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageArch</option><option value="jumpTo_61">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageFormat</option><option value="jumpTo_62">&nbsp;&nbsp;&nbsp;&nbsp;NSObjectFileImageAccess</option></select></li>
+            <li id="downloadSample_button" style="display: none;">
+                <a id="Sample_link"><button id="Sample_button">Download Sample Code</button></a>
+            </li>
+        </ul>
+    </header>
+    <nav id="tocContainer" tabindex="7" class="isShowingTOC">
+        <ul id="toc" role="tree"><li class=" " data-aref="//apple_ref/doc/uid/TP40001414-DontLinkElementID_3"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001414-DontLinkElementID_3">Overview</a></span></li><li class="children " data-aref="//apple_ref/doc/uid/TP40001398-Reference-DontLinkElementID_4" role="treeitem"><span class="disclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-Reference-DontLinkElementID_4">Functions by Task</a></span><ul><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJHGHCD"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJHGHCD">Dynamic Loader Compatibility Functions</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF101"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-TPXREF101">Object File Image Functions</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJEAFCD"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJEAFCD">Library Functions</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF146"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-TPXREF146">Section and Segment Accessors</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF104"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-TPXREF104">Low-Level Functions</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF132"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-TPXREF132">Glue Functions for Indirect Addressing</a></span></li></ul></li><li class="children " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF107" role="treeitem"><span class="disclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-TPXREF107">Functions</a></span><ul><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJCDFEI"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJCDFEI">dladdr</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJEGBCJ"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJEGBCJ">dlclose</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJCIEFB"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJCIEFB">dlerror</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJJDAGC"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJJDAGC">dlopen</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJGBCGG"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJGBCGG">dlsym</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-dyld_stub_binding_helper"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-dyld_stub_binding_helper">dyld_stub_binding_helper</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsectbyname"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsectbyname">getsectbyname</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsectbynamefromheader"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsectbynamefromheader">getsectbynamefromheader</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_1"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_1">getsectbynamefromheader_64</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsectdata"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsectdata">getsectdata</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromFramework"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromFramework">getsectdatafromFramework</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromheader"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromheader">getsectdatafromheader</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_2"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_2">getsectdatafromheader_64</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-getsegbyname"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-getsegbyname">getsegbyname</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJDABCA"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJDABCA">NSAddImage</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibrary"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibrary">NSAddLibrary</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibraryWithSearching"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibraryWithSearching">NSAddLibraryWithSearching</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSAddressOfSymbol"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSAddressOfSymbol">NSAddressOfSymbol</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromFile"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromFile">NSCreateObjectFileImageFromFile</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromMemory"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromMemory">NSCreateObjectFileImageFromMemory</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSDestroyObjectFileImage"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSDestroyObjectFileImage">NSDestroyObjectFileImage</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefined"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefined">NSIsSymbolNameDefined</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJDHGGD"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJDHGGD">NSIsSymbolNameDefinedInImage</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefinedWithHint"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefinedWithHint">NSIsSymbolNameDefinedWithHint</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSLibraryNameForModule"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSLibraryNameForModule">NSLibraryNameForModule</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSLinkModule"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSLinkModule">NSLinkModule</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbol"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbol">NSLookupAndBindSymbol</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbolWithHint"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbolWithHint">NSLookupAndBindSymbolWithHint</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-BAJBEJJE"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-BAJBEJJE">NSLookupSymbolInImage</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupSymbolInModule"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSLookupSymbolInModule">NSLookupSymbolInModule</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSModuleForSymbol"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSModuleForSymbol">NSModuleForSymbol</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfModule"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfModule">NSNameOfModule</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfSymbol"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfSymbol">NSNameOfSymbol</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-NSUnLinkModule"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-NSUnLinkModule">NSUnLinkModule</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_fully_image_containing_address"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_fully_image_containing_address">_dyld_bind_fully_image_containing_address</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_objc_module"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_objc_module">_dyld_bind_objc_module</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_func_lookup"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_func_lookup">_dyld_func_lookup</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_header"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_header">_dyld_get_image_header</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_name"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_name">_dyld_get_image_name</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_vmaddr_slide"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_vmaddr_slide">_dyld_get_image_vmaddr_slide</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_objc_module_sect_for_module"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_objc_module_sect_for_module">_dyld_get_objc_module_sect_for_module</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_containing_address"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_containing_address">_dyld_image_containing_address</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_count"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_count">_dyld_image_count</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_launched_prebound"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_launched_prebound">_dyld_launched_prebound</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind">_dyld_lookup_and_bind</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_fully"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_fully">_dyld_lookup_and_bind_fully</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_objc"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_objc">_dyld_lookup_and_bind_objc</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_with_hint"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_with_hint">_dyld_lookup_and_bind_with_hint</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_moninit"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_moninit">_dyld_moninit</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_present"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_present">_dyld_present</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_add_image"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_add_image">_dyld_register_func_for_add_image</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_link_module"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_link_module">_dyld_register_func_for_link_module</a></span></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_remove_image"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_remove_image">_dyld_register_func_for_remove_image</a></span></li></ul></li><li class="children " data-aref="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_5" role="treeitem"><span class="disclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_5">Constants</a></span><ul><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH209-SW1"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH209-SW1">Mach-O Image Creation Return Codes</a></span></li></ul></li><li class=" " data-aref="//apple_ref/doc/uid/TP40001398-CH202-DontLinkElementID_8"><span class="nodisclosure"></span><span class="sectionName"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/RevisionHistory/RevisionHistory.html#//apple_ref/doc/uid/TP40001398-CH202-DontLinkElementID_8">Revision History</a></span></li></ul>
+    </nav>
+
+    <article id="contents" tabindex="0" role="main" class="isShowingTOC">
+        <div id="pageNavigationLinks_top" class="pageNavigationLinks">
+            <a class="nextLink" rel="next" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/RevisionHistory/RevisionHistory.html">Next</a>
+        </div>
+        <a id="top" name="top"></a>
+        <a id="INDEX" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/index.html" style="display:none;"></a>
+        
+        <a name="//apple_ref/doc/uid/TP40001398" title="OS X ABI Dynamic Loader Reference"></a><a name="//apple_ref/doc/uid/TP40001398-Reference-DontLinkElementID_6" title="OS X ABI Dynamic Loader Reference"></a><h1 id="pageTitle">OS X ABI Dynamic Loader Reference</h1><section><a name="//apple_ref/doc/uid/TP40001414-DontLinkElementID_3" title="Overview"></a><h2 class="jump" id="jumpTo_0">Overview</h2><p>Most Mac apps need to load and use dynamic shared libraries or bundles at runtime. The dynamic loader, <code>dyld</code>, is a shared library that programs use to gain access to other shared libraries. The dynamic loader locates Mach-O files on disk and maps them into the memory space of the current program.</p>
+<p>Well-written programs don’t load shared libraries until they are needed. This minimizes the launch time and memory footprint of the application. It may also improve the general performance of the system through reduced paging.</p>
+<p>This document describes the low-level functions of the Mac app binary interface (ABI) that you can use to load, link, and unload Mach-O files at runtime.</p>
+<p>You should read this document if you develop applications that use dynamic shared libraries or libraries that use other libraries.</p>
+<p>These documents provide information about the runtime loading of code:</p>
+<ul class="ul"><li class="li"><p><span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001519" target="_self">“Mach-O Programming Topics”</a></span> describes runtime code-loading concepts and ways to correctly package shared libraries into versioned frameworks.</p></li>
+<li class="li"><p><span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/LoadingCode/LoadingCode.html#//apple_ref/doc/uid/10000052i" target="_self">“Dynamically Loading Code”</a></span> describes higher level techniques to load code at runtime.</p></li></ul></section><section><a name="//apple_ref/doc/uid/TP40001398-Reference-DontLinkElementID_4" title="Functions by Task"></a><h2 class="jump" id="jumpTo_1">Functions by Task</h2><p>The dynamic linker provides several types of functionality that allow your application to manipulate Mach-O files at runtime.</p>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-315644" title="Dynamic Loader Compatibility Functions"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJHGHCD" title="Dynamic Loader Compatibility Functions"></a>
+    
+    <h3 class="tasks">Dynamic Loader Compatibility Functions</h3>
+    <p>These are the recommended functions to use to interact with the dynamic loader. These functions work in OS X v10.3 and v10.4. However, in OS X v10.4 they are more efficient than other image-loading functions. These functions are declared in <code>/usr/include/dlfcn.h</code>.</p>    
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dladdr">dladdr</a></code>
+                
+					<span class="tooltipicon" data-abstract="Finds the image and nearest symbol corresponding to an address. Available only in dynamically linked programs."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>
+                
+					<span class="tooltipicon" data-abstract="Closes a dynamic library or bundle."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>
+                
+					<span class="tooltipicon" data-abstract="Provides diagnostic information corresponding to problems with calls to &lt;code&gt;dlopen&lt;/code&gt;, &lt;code&gt;dlsym&lt;/code&gt;, and &lt;code&gt;dlclose&lt;/code&gt; in the same thread."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>
+                
+					<span class="tooltipicon" data-abstract="Loads and links a dynamic library or bundle."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the address of a symbol."></span>
+            </span></li>
+    </ul>
+
+
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-301081" title="Object File Image Functions"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF101" title="Object File Image Functions"></a>
+    
+    <h3 class="tasks"><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF108" title="Object File Image Functions"></a>Object File Image Functions</h3>
+    <p>These functions are for loading Mach-O bundle files. They are declared in <code>/usr/include/mach-o/dyld.h</code>. The use of these functions is discouraged. You should use the more efficient functions described in <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-315644">“Dynamic Loader Compatibility Functions.”</a></span></p>    
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromFile">NSCreateObjectFileImageFromFile</a></code>
+                
+					<span class="tooltipicon" data-abstract="Creates an image reference for a given Mach-O file."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromMemory">NSCreateObjectFileImageFromMemory</a></code>
+                
+					<span class="tooltipicon" data-abstract="Creates an image reference for a Mach-O file currently in memory."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSDestroyObjectFileImage">NSDestroyObjectFileImage</a></code>
+                
+					<span class="tooltipicon" data-abstract="Releases the given object file image."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLinkModule">NSLinkModule</a></code>
+                
+					<span class="tooltipicon" data-abstract="Links the given object file image as a module into the current program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupAndBindSymbol">NSLookupAndBindSymbol</a></code>
+                
+					<span class="tooltipicon" data-abstract="Given a symbol name, returns the corresponding symbol from the global symbol table."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupAndBindSymbolWithHint">NSLookupAndBindSymbolWithHint</a></code>
+                
+					<span class="tooltipicon" data-abstract="Given a symbol name, returns the corresponding symbol from the global symbol table."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupSymbolInModule">NSLookupSymbolInModule</a></code>
+                
+					<span class="tooltipicon" data-abstract="Given a module reference, returns a reference to the symbol with the given name."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSNameOfModule">NSNameOfModule</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the name of the given module."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefined">NSIsSymbolNameDefined</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns &lt;code&gt;TRUE&lt;/code&gt; if the given symbol is defined in the current program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefinedInImage">NSIsSymbolNameDefinedInImage</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns &lt;code&gt;TRUE&lt;/code&gt; if the given image contains the named symbol."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefinedWithHint">NSIsSymbolNameDefinedWithHint</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns &lt;code&gt;TRUE&lt;/code&gt; if the given symbol is defined in the current program, with a hint specifying the name of the shared library likely to contain the symbol."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSModuleForSymbol">NSModuleForSymbol</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns a reference to the module containing the given symbol."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSUnLinkModule">NSUnLinkModule</a></code>
+                
+					<span class="tooltipicon" data-abstract="Unlinks the given module from the current program."></span>
+            </span></li>
+    </ul>
+
+
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-317204" title="Library Functions"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJEAFCD" title="Library Functions"></a>
+    
+    <h3 class="tasks"><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF149" title="Library Functions"></a>Library Functions</h3>
+    <p>The functions described in this section are declared in <code>/usr/include/mach-o/dyld.h</code>. The use of these functions is discouraged. You should use the more efficient functions described in <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/uid/TP40001398-CH1g-315644">“Dynamic Loader Compatibility Functions.”</a></span></p>    
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code>
+                
+					<span class="tooltipicon" data-abstract="Adds the specified Mach-O image to the currently running process."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddLibrary">NSAddLibrary</a></code>
+                
+					<span class="tooltipicon" data-abstract="Adds a dynamic shared library to the search list."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddLibraryWithSearching">NSAddLibraryWithSearching</a></code>
+                
+					<span class="tooltipicon" data-abstract="Adds a dynamic shared library to the search list—using the various &lt;code&gt;dyld&lt;/code&gt; environment variables—as if the library were linked into the program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddressOfSymbol">NSAddressOfSymbol</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the address in the program’s address space of the data represented by the given symbol. The data may be a variable, a constant, or the first instruction of a function."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLibraryNameForModule">NSLibraryNameForModule</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the name of the library that contains the given module."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns a reference to the specified symbol from the specified image."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSNameOfSymbol">NSNameOfSymbol</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the name of the given symbol."></span>
+            </span></li>
+    </ul>
+
+
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-186537" title="Section and Segment Accessors"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF146" title="Section and Segment Accessors"></a>
+    
+    <h3 class="tasks"><a name="//apple_ref/doc/uid/TP40001398-CH1g-BBCJFDHI" title="Section and Segment Accessors"></a>Section and Segment Accessors</h3>
+    <p>The functions described in this section are declared in <code>/usr/include/mach-o/getsect.h</code>.</p>    
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectbyname">getsectbyname</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns a data structure representing a section of the Mach-O file that contains the main executable program of the current process."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectbynamefromheader">getsectbynamefromheader</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data structure representing a section of a specified 32-bit Mach-O file."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectbynamefromheader_64">getsectbynamefromheader_64</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data structure representing a section of a specified 64-bit Mach-O file."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectdata">getsectdata</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data for a section from the Mach-O file of the main executable program of the current process."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectdatafromFramework">getsectdatafromFramework</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data for a section of the Mach-O file containing a specified framework."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectdatafromheader">getsectdatafromheader</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data for a section of a specified 32-bit Mach-O file."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsectdatafromheader_64">getsectdatafromheader_64</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data for a section of a specified 64-bit Mach-O file."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/getsegbyname">getsegbyname</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns a data structure representing a segment of the Mach-O file containing the main executable program of the current process."></span>
+            </span></li>
+    </ul>
+
+
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-187658" title="Low-Level Functions"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF104" title="Low-Level Functions"></a>
+    
+    <h3 class="tasks"><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF111" title="Low-Level Functions"></a>Low-Level Functions</h3>
+        
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_bind_fully_image_containing_address">_dyld_bind_fully_image_containing_address</a></code>
+                
+					<span class="tooltipicon" data-abstract="Finds the image containing the specified address and fully binds all the modules within it."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_bind_objc_module">_dyld_bind_objc_module</a></code>
+                
+					<span class="tooltipicon" data-abstract="Binds the module that contains a given Objective-C address."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_func_lookup">_dyld_func_lookup</a></code>
+                
+					<span class="tooltipicon" data-abstract="Obtains the address of the implementation of a &lt;code&gt;dyld&lt;/code&gt; library function."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_header">_dyld_get_image_header</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the data structure for the header of a specified image. The image is specified by index into the list of images maintained by &lt;code&gt;dyld&lt;/code&gt; for the current process."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_name">_dyld_get_image_name</a></code>
+                
+					<span class="tooltipicon" data-abstract="Retrieves the name of an image."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_vmaddr_slide">_dyld_get_image_vmaddr_slide</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the virtual memory address slide amount of an image."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_objc_module_sect_for_module">_dyld_get_objc_module_sect_for_module</a></code>
+                
+					<span class="tooltipicon" data-abstract="Obtains the size and starting location of an Objective-C module."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_image_count">_dyld_image_count</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns the number of images that &lt;code&gt;dyld&lt;/code&gt; has mapped into the address space of the current process."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_image_containing_address">_dyld_image_containing_address</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns whether or not a specified address is within any loaded image."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_launched_prebound">_dyld_launched_prebound</a></code>
+                
+					<span class="tooltipicon" data-abstract="Returns whether or not the dynamic linker was able to launch the program with the prebinding optimization enabled."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind">_dyld_lookup_and_bind</a></code>
+                
+					<span class="tooltipicon" data-abstract="Finds the given symbol name and binds it into the program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind_fully">_dyld_lookup_and_bind_fully</a></code>
+                
+					<span class="tooltipicon" data-abstract="Finds the module containing the specified symbol and fully binds all the symbol references within it."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind_objc">_dyld_lookup_and_bind_objc</a></code>
+                
+					<span class="tooltipicon" data-abstract="Obtains and binds the Objective-C module that contains the specified symbol."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind_with_hint">_dyld_lookup_and_bind_with_hint</a></code>
+                
+					<span class="tooltipicon" data-abstract="Finds the given symbol name and binds it into the program, with a hint to allow &lt;code&gt;dyld&lt;/code&gt; to speed up the symbol search for a prebound program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_moninit">_dyld_moninit</a></code>
+                
+					<span class="tooltipicon" data-abstract="This function is used by the profiling routine &lt;code&gt;moninit&lt;/code&gt; to allow images other than the main executable to be profiled."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_present">_dyld_present</a></code>
+                
+					<span class="tooltipicon" data-abstract="Indicates whether or not the dynamic linker is loaded into the current program"></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_register_func_for_add_image">_dyld_register_func_for_add_image</a></code>
+                
+					<span class="tooltipicon" data-abstract="Registers a function to be called by the dynamic linker runtime when an image is added to the program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_register_func_for_link_module">_dyld_register_func_for_link_module</a></code>
+                
+					<span class="tooltipicon" data-abstract="Registers a function to be called by the dynamic linker runtime when a module is linked into the program."></span>
+            </span></li>
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_register_func_for_remove_image">_dyld_register_func_for_remove_image</a></code>
+                
+					<span class="tooltipicon" data-abstract="Registers a function to be called by the dynamic linker runtime when an image is removed from the program."></span>
+            </span></li>
+    </ul>
+
+
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-258478" title="Glue Functions for Indirect Addressing"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF132" title="Glue Functions for Indirect Addressing"></a>
+    
+    <h3 class="tasks"><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF131" title="Glue Functions for Indirect Addressing"></a>Glue Functions for Indirect Addressing</h3>
+        
+    <ul class="tooltip">
+            <li><span class="tooltip">
+                
+                <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dyld_stub_binding_helper">dyld_stub_binding_helper</a></code>
+                
+					<span class="tooltipicon" data-abstract="Assembly-language glue code that performs binding for a lazy function symbol."></span>
+            </span></li>
+    </ul>
+
+</section><section><a name="//apple_ref/doc/uid/TP40001398-CH1g-188085" title="Functions"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-TPXREF107" title="Functions"></a><h2 class="jump" id="jumpTo_2">Functions</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="//apple_ref/c/func/dladdr" title="dladdr"></a><a name="//apple_ref/doc/c_ref/dladdr" title="dladdr"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJCDFEI" title="dladdr"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_9"></a><h3 class="tight jump function" id="jumpTo_3">dladdr</h3>
+<p class="abstract">Finds the image and nearest symbol corresponding to an address. Available only in dynamically linked programs.</p>
+<pre class="declaration">int dladdr(
+   const void* addr,
+   Dl_info* info);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>addr</em></dt>
+<dd><p>On input, an address within the address space of the program.</p></dd>
+<dt><em>info</em></dt>
+<dd><p>Storage for a <code>Dl_info</code> object. On return, the symbolic information found.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>When an image containing the address specified in <code>addr</code> cannot be found, this function returns <code>0</code>. Otherwise, the result is a value other than <code>0</code>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This is the declaration for the <code>Dl_info</code> structure:</p>
+<div class="codesample clear"><table><tbody><tr><td scope="row"><pre> <span></span></pre></td></tr><tr><td scope="row"><pre>typedef struct dl_info {<span></span></pre></td></tr><tr><td scope="row"><pre>    const char* dli_fname;<span></span></pre></td></tr><tr><td scope="row"><pre>    void* dli_fbase;<span></span></pre></td></tr><tr><td scope="row"><pre>    const char* dli_sname;<span></span></pre></td></tr><tr><td scope="row"><pre>    void* dli_saddr;<span></span></pre></td></tr><tr><td scope="row"><pre>} Dl_info;<span></span></pre></td></tr></tbody></table></div>
+<p>The descriptions for the fields in <code>Dl_info</code> are:</p>
+<ul class="ul"><li class="li"><p><code>dli_fname</code>: The pathname of the image containing the address in <code>addr</code>.</p></li>
+<li class="li"><p><code>dli_fbase</code>: The base address (<code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code>) at which the image is mapped into the address space of the program.</p></li>
+<li class="li"><p><code>dli_sname</code>: The name of the nearest runtime symbol.</p></li>
+<li class="li"><p><code>dli_saddr</code>: The value of the symbol specified by <code>dli_sname</code>.</p></li></ul>
+<p>If the image containing <code>addr</code> is found, but no near symbol is found, the <code>dli_sname</code> and <code>dli_saddr</code> fields in the <code>Dl_info</code> object are set to <code>NULL</code>. A near symbol is a symbol within the image whose address is equal to or lower than <code>addr</code>.</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code><code></code><code></code>.</p></div>  
+<a name="//apple_ref/c/func/dlclose" title="dlclose"></a><a name="//apple_ref/doc/c_ref/dlclose" title="dlclose"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJEGBCJ" title="dlclose"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_10"></a><h3 class="tight jump function" id="jumpTo_4">dlclose</h3>
+<p class="abstract">Closes a dynamic library or bundle.</p>
+<pre class="declaration">int dlclose(
+   void* handle);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>handle</em></dt>
+<dd><p>Handle obtained through a call to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>This function returns <code>0</code> when successful and a value other than <code>0</code> when unsuccessful.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function decreases the reference count of the image referenced by <code>handle</code>. When the reference count for <code>handle</code> becomes <code>0</code>, the termination routines in the image are called, and the image is removed from the address space of the current process. After that point, <code>handle</code> is rendered invalid.</p>
+<p>If this function is unsuccessful, it sets an error condition that can be queried with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p></div>  
+<a name="//apple_ref/c/func/dlerror" title="dlerror"></a><a name="//apple_ref/doc/c_ref/dlerror" title="dlerror"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJCIEFB" title="dlerror"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_11"></a><h3 class="tight jump function" id="jumpTo_5">dlerror</h3>
+<p class="abstract">Provides diagnostic information corresponding to problems with calls to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>, and <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code> in the same thread.</p>
+<pre class="declaration">const char* dlerror(
+   void);
+</pre>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>When there’s a problem to report, this function returns a pointer to a null-terminated string describing the problem. Otherwise, this function returns <code>NULL</code>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Each call to <code>dlerror</code> resets its diagnostic buffer. If a program needs to keep a record of past error messages, it must store them itself. Subsequent calls to <code>dlerror</code> in the same thread with no calls to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>, or <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>, return <code>NULL</code>.</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>.</p></div>  
+<a name="//apple_ref/c/func/dlopen" title="dlopen"></a><a name="//apple_ref/doc/c_ref/dlopen" title="dlopen"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJJDAGC" title="dlopen"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_12"></a><h3 class="tight jump function" id="jumpTo_6">dlopen</h3>
+<p class="abstract">Loads and links a dynamic library or bundle.</p>
+<pre class="declaration">void* dlopen(
+   const char* path,
+   int mode);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>path</em></dt>
+<dd><p>Path to the image to open.</p></dd>
+<dt><em>mode</em></dt>
+<dd><p>Specifies when the loaded image’s external symbols are bound to their definitions in dependent libraries (lazy or at load time) and the visibility of the image’s exported symbols (global or local). The value of this parameter is made up by ORing one binding behavior value with one visibility specification value.</p><p>The following values specify the binding behavior:</p><ul class="termdef">
+<li class="termdef"><p><code>RTLD_LAZY</code> (default): Each external symbol reference is bound the first time it’s used.</p></li>
+<li class="termdef"><p><code>RTLD_NOW</code>: All external symbol references are bound immediately.</p></li></ul><p>The following values specify external symbol visibility:</p><ul class="termdef">
+<li class="termdef"><p><code>RTLD_GLOBAL</code> (default): The loaded image’s exported symbols are available to any images that use a flat namespace or to calls to <code>dlsym</code> when using a special handle (see <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code> for details).</p></li>
+<li class="termdef"><p><code>RTLD_LOCAL</code>: The loaded image’s exported symbols are generally hidden. They are available only to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code> invocations that use the handle returned by this function.</p></li></ul></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A handle that can be used with calls to <code></code><code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code> and <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function examines the Mach-O file specified by <code>path</code>. If the image is compatible with the current process and has not already been loaded into the process, the image is loaded and linked. If the image contains initializer functions, they are executed before this function returns.</p>
+<p>Subsequent calls to <em>dlopen</em> to load the same image return the same handle, but the internal reference count for the handle is incremented. Therefore, all <code>dlopen</code> calls must be balanced with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code> calls.</p>
+<p>For efficiency, the <code>RTLD_LAZY</code> binding mode is preferred over <code>RTLD_NOW</code>. However, using <code>RTLD_NOW</code> ensures that any undefined symbols are discovered during the call to <code>dlopen</code>.</p>
+<p>The dynamic loader looks in the paths specified by a set of environment variables, and in the process’s current directory, when it searches for a library. These paths are called dynamic loader search paths. The environment variables are <code>LD_LIBRARY_PATH</code>, <code>DYLD_LIBRARY_PATH</code>, and <code>DYLD_FALLBACK_LIBRARY_PATH</code>. The default value of <code>DYLD_FALLBACK_LIBRARY_PATH</code> (used when this variable is not set), is <code>$HOME/lib;/usr/local/lib;/usr/lib</code>.</p>
+<p>The order in which the search paths are searched depends on whether <code>path</code> is a filename (it does not contain a slash) or a pathname (it contains at least one slash).</p>
+<p>When <code>path</code> is a filename, the dynamic loader searches for the library in the search paths in the following order:</p>
+<ol class="ol"><li class="li"><p><code>$LD_LIBRARY_PATH</code></p></li>
+<li class="li"><p><code>$DYLD_LIBRARY_PATH</code></p></li>
+<li class="li"><p>The process’s working directory</p></li>
+<li class="li"><p><code>$DYLD_FALLBACK_LIBRARY_PATH</code></p></li></ol>
+<p>When <code>path</code> is a pathname, the dynamic loader searches for the library in the search paths in the following order:</p>
+<ol class="ol"><li class="li"><p><code>$DYLD_LIBRARY_PATH</code></p></li>
+<li class="li"><p>The given pathname</p></li>
+<li class="li"><p><code>$DYLD_FALLBACK_LIBRARY_PATH</code> using the filename</p></li></ol>
+<p>If this function cannot open an image, it sets an error condition that can be accessed with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p>
+<div class="importantbox clear"><aside><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_7" title="Important"></a><p><strong>Important:</strong>&nbsp;
+
+In OS X, libraries can combine object code for both 32-bit and 64-bit PowerPC processors. Therefore, there are no separate 32-bit and 64-bit search paths.</p><p></p></aside></div>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p></div>  
+<a name="//apple_ref/c/func/dlsym" title="dlsym"></a><a name="//apple_ref/doc/c_ref/dlsym" title="dlsym"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJGBCGG" title="dlsym"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_13"></a><h3 class="tight jump function" id="jumpTo_7">dlsym</h3>
+<p class="abstract">Returns the address of a symbol.</p>
+<pre class="declaration">void* dlsym(
+   void* handle,
+   const char* symbol);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>handle</em></dt>
+<dd><p>Handle obtained by a call to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, or a special handle. If the handle was obtained by a call to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, it must not have been closed with a call to <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>. These are the possible special-handle values: <code>RTLD_DEFAULT</code>, and <code>RTLD_NEXT</code>.</p></dd>
+<dt><em>symbol</em></dt>
+<dd><p>Null-terminated character string containing the C name of the symbol being sought.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>When successful, this function returns the address of <code>symbol</code>. Otherwise, it returns a null pointer.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>The value of handle specifies what images this function searches for to locate the symbol specified by the <code>symbol</code> parameter. <span class="content_text">Table 1</span> describes the possible values for the <code>handle</code> parameter.</p>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-316495" title="Table 1Values for the handle parameter"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJCJJGD" title="Table 1Values for the handle parameter"></a><div class="tableholder"><table class="graybox" border="0" cellspacing="0" cellpadding="5">
+<caption class="tablecaption"><strong class="caption_number">Table 1</strong>&nbsp;&nbsp;Values for the handle parameter</caption>
+
+<tbody><tr>
+<th scope="col" class="TableHeading_TableRow_TableCell"><p>Handle value</p></th>
+<th scope="col" class="TableHeading_TableRow_TableCell"><p>Search scope</p></th>
+</tr>
+
+
+<tr>
+<td scope="row"><p><code>dlopen</code> handle</p></td>
+<td><p>Image associated with the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code> handle.</p></td>
+</tr>
+<tr>
+<td scope="row"><p><code>RTLD_DEFAULT</code></p></td>
+<td><p>Every dependent library or <code>RTLD_GLOBAL</code>–opened library in the current process, in the order they were loaded.</p></td>
+</tr>
+<tr>
+<td scope="row"><p><em>RTLD_NEXT</em></p></td>
+<td><p>Dependent libraries that were loaded after the one calling this function. Libraries opened with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code> are not searched.</p></td>
+</tr>
+
+</tbody></table></div>
+<p>Unlike in the <code>NS...</code> functions, the <code>symbol</code> parameter doesn’t require a leading underscore to be part of the symbol name.</p>
+<p>If this function is unsuccessful, it sets an error condition that can be queried with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>, <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlerror">dlerror</a></code>.</p></div>  
+<a name="//apple_ref/c/func/dyld_stub_binding_helper" title="dyld_stub_binding_helper"></a><a name="//apple_ref/doc/c_ref/dyld_stub_binding_helper" title="dyld_stub_binding_helper"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-dyld_stub_binding_helper" title="dyld_stub_binding_helper"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_14"></a><h3 class="tight jump function" id="jumpTo_8">dyld_stub_binding_helper</h3>
+<p class="abstract">Assembly-language glue code that performs binding for a lazy function symbol.</p>
+<pre class="declaration">.private_extern dyld_stub_binding_helper
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>PowerPC: r11 x86:             stack-based parameter</em></dt>
+<dd><p>A pointer to the lazy symbol pointer for the function to be bound.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>The <code>dyld</code> stub binding helper is a glue function that assists the dynamic linker in lazily binding an external function. When the compiler sees a call to an external function, it generates a symbol stub and a lazy pointer for the function. At the call site, the compiler generates a call to the symbol stub. The symbol stub is a sequence of code that loads the lazy pointer and jumps to it. Initially, the sequence of code and the contents of the lazy pointer call this function, which calls the dynamic linker to bind the symbol. After the symbol is bound, the lazy pointer is set to the address of the symbol, and the symbol is reached directly by jumping to the lazy pointer.</p>
+<p>Thereafter, because the address has been changed to the actual address of the function, all calls to the external function call the external function.</p>
+<p>On entry, this function accepts the address of the lazy symbol pointer. On exit, the value of the lazy symbol pointer is set to the address of the external function. The <code>dyld</code> stub binding helper is assembly-language based and does not use standard calling conventions, and as such, the location of the parameters are specific to each CPU architecture. On PowerPC, the address of the lazy symbol pointer is expected to be in GPR11. On x86, the address of the lazy symbol pointer should be the pushed on the stack.</p>
+<p>This function is located in the runtime startup files that are statically linked into the image. For executables, the file is <code>/lib/crt1.o</code>. For bundles, it is <code>/lib/bundle1.o</code>, and for shared libraries, it is <code>/lib/dylib1.o</code>.</p></div>  <a name="//apple_ref/c/func/getsectbyname" title="getsectbyname"></a><a name="//apple_ref/doc/c_ref/getsectbyname" title="getsectbyname"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsectbyname" title="getsectbyname"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_15"></a><h3 class="tight jump function" id="jumpTo_9">getsectbyname</h3>
+<p class="abstract">Returns a data structure representing a section of the Mach-O file that contains the main executable program of the current process.</p>
+<pre class="declaration">const struct section* getsectbyname(
+   const char* segname,
+   const char* sectname);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/section" target="_self">section</a></code> (<span class="content_text"><!--a target="_self" -->“Mach-O File Format Reference”<!--/a--></span>) data structure.</p></div>   <a name="//apple_ref/c/func/getsectbynamefromheader" title="getsectbynamefromheader"></a><a name="//apple_ref/doc/c_ref/getsectbynamefromheader" title="getsectbynamefromheader"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsectbynamefromheader" title="getsectbynamefromheader"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_16"></a><h3 class="tight jump function" id="jumpTo_10">getsectbynamefromheader</h3>
+<p class="abstract">Returns the data structure representing a section of a specified 32-bit Mach-O file.</p>
+<pre class="declaration">const struct section* getsectbynamefromheader(
+   const struct mach_header* mhp,
+   const char* segname,
+   const char* sectname);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>mhp</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure. Pass the <code>mach_header</code> of the file containing the section data you wish to retrieve.</p></dd>
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/section" target="_self">section</a></code> data structure.</p></div>   <a name="//apple_ref/c/func/getsectbynamefromheader_64" title="getsectbynamefromheader_64"></a><a name="//apple_ref/doc/c_ref/getsectbynamefromheader_64" title="getsectbynamefromheader_64"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_1" title="getsectbynamefromheader_64"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_17"></a><h3 class="tight jump function" id="jumpTo_11">getsectbynamefromheader_64</h3>
+<p class="abstract">Returns the data structure representing a section of a specified 64-bit Mach-O file.</p>
+<pre class="declaration">const struct section_64* getsectbynamefromheader(
+   const struct mach_header_64* mhp,
+   const char* segname,
+   const char* sectname);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>mhp</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header_64" target="_self">mach_header_64</a></code> data structure. Pass the <code>mach_header</code> of the file containing the section data you wish to retrieve.</p></dd>
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/section_64" target="_self">section_64</a></code> data structure.</p></div>   <a name="//apple_ref/c/func/getsectdata" title="getsectdata"></a><a name="//apple_ref/doc/c_ref/getsectdata" title="getsectdata"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsectdata" title="getsectdata"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_18"></a><h3 class="tight jump function" id="jumpTo_12">getsectdata</h3>
+<p class="abstract">Returns the data for a section from the Mach-O file of the main executable program of the current process.</p>
+<pre class="declaration">char* getsectdata(
+   const char* segname,
+   const char* sectname,
+   unsigned long* size);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd>
+<dt><em>size</em></dt>
+<dd><p>A pointer to a long integer. On output, contains the length (in bytes) of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the data of the section.</p></div>   <a name="//apple_ref/c/func/getsectdatafromFramework" title="getsectdatafromFramework"></a><a name="//apple_ref/doc/c_ref/getsectdatafromFramework" title="getsectdatafromFramework"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromFramework" title="getsectdatafromFramework"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_19"></a><h3 class="tight jump function" id="jumpTo_13">getsectdatafromFramework</h3>
+<p class="abstract">Returns the data for a section of the Mach-O file containing a specified framework.</p>
+<pre class="declaration">char* getsectdatafromFramework(
+   const char* FrameworkName,
+   const char* segname,
+   const char* sectname,
+   unsigned long* size);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>FrameworkName</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the framework in which the section resides.</p></dd>
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd>
+<dt><em>size</em></dt>
+<dd><p>A pointer to a long integer. On output, contains the length (in bytes) of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the data of the section. If the Mach-O file is a dynamic shared library (<code>MH_DYLIB</code>), you need to add the virtual memory slide amount to this address to get the true address of the data. See <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_vmaddr_slide">_dyld_get_image_vmaddr_slide</a></code> for more information.</p></div>   <a name="//apple_ref/c/func/getsectdatafromheader" title="getsectdatafromheader"></a><a name="//apple_ref/doc/c_ref/getsectdatafromheader" title="getsectdatafromheader"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsectdatafromheader" title="getsectdatafromheader"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_20"></a><h3 class="tight jump function" id="jumpTo_14">getsectdatafromheader</h3>
+<p class="abstract">Returns the data for a section of a specified 32-bit Mach-O file.</p>
+<pre class="declaration">char* getsectdatafromheader(
+   const struct mach_header* mhp,
+   const char* segname,
+   const char* sectname,
+   uint32_t* size);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>mhp</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure. Pass the <code>mach_header</code> of the file containing the section data you wish to retrieve.</p></dd>
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd>
+<dt><em>size</em></dt>
+<dd><p>A pointer to a long integer. On output, contains the length (in bytes) of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the data of the section. If the Mach-O file is a dynamic shared library (<code>MH_DYLIB</code>), you need to add the virtual memory slide amount to this address to get the true address of the data. See <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_vmaddr_slide">_dyld_get_image_vmaddr_slide</a></code> for more information.</p></div>   <a name="//apple_ref/c/func/getsectdatafromheader_64" title="getsectdatafromheader_64"></a><a name="//apple_ref/doc/c_ref/getsectdatafromheader_64" title="getsectdatafromheader_64"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_2" title="getsectdatafromheader_64"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_21"></a><h3 class="tight jump function" id="jumpTo_15">getsectdatafromheader_64</h3>
+<p class="abstract">Returns the data for a section of a specified 64-bit Mach-O file.</p>
+<pre class="declaration">char* getsectdatafromheader(
+   const struct mach_header_64* mhp,
+   const char* segname,
+   const char* sectname,
+   uint64_t* size);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>mhp</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header_64" target="_self">mach_header_64</a></code> data structure. Pass the <code>mach_header</code> of the file containing the section data you wish to retrieve.</p></dd>
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment in which the section resides.</p></dd>
+<dt><em>sectname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the section.</p></dd>
+<dt><em>size</em></dt>
+<dd><p>A pointer to a long integer. On output, contains the length (in bytes) of the section.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the data of the section. If the Mach-O file is a dynamic shared library (<code>MH_DYLIB</code>), you need to add the virtual memory slide amount to this address to get the true address of the data. See <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_vmaddr_slide">_dyld_get_image_vmaddr_slide</a></code> for more information.</p></div>   <a name="//apple_ref/c/func/getsegbyname" title="getsegbyname"></a><a name="//apple_ref/doc/c_ref/getsegbyname" title="getsegbyname"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-getsegbyname" title="getsegbyname"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_22"></a><h3 class="tight jump function" id="jumpTo_16">getsegbyname</h3>
+<p class="abstract">Returns a data structure representing a segment of the Mach-O file containing the main executable program of the current process.</p>
+<pre class="declaration">const struct segment_command* getsegbyname(
+   const char* segname);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>segname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the segment.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/segment_command" target="_self">segment_command</a></code> (<span class="content_text"><!--a target="_self" -->“Mach-O File Format Reference”<!--/a--></span>) data structure.</p></div>   <a name="//apple_ref/c/func/NSAddImage" title="NSAddImage"></a><a name="//apple_ref/doc/c_ref/NSAddImage" title="NSAddImage"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJDABCA" title="NSAddImage"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_23"></a><h3 class="tight jump function" id="jumpTo_17">NSAddImage</h3>
+<p class="abstract">Adds the specified Mach-O image to the currently running process.</p>
+<pre class="declaration">const struct mach_header* NSAddImage(
+   const char* image_name,
+   uint32_t options);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image_name</em></dt>
+<dd><p>A pointer to a C string. Pass the pathname to a shared library on disk. For best performance, specify the full pathname of the shared library—not a symlink.</p></dd>
+<dt><em>options</em></dt>
+<dd><p>A bit mask. Pass one or more of the following options or <code>NSADDIMAGE_OPTION_NONE</code> to specify no options:</p><dl class="termdef">	<dt><code>NSADDIMAGE_OPTION_RETURN_ON_ERROR</code></dt>
+<dd><p>If an error occurs and you have specified this option, this function returns <code>NULL</code>. You can then use the function <code>NSLinkEditError</code> to retrieve information about the error.</p><p>If an error occurs, and you have not specified this option, this function calls the <code>linkEdit</code> error handler you have installed using the <code><!--a-->NSInstallLinkEditErrorHandlers<!--/a--></code> function. If you have not installed a link edit error handler, this function prints an error to <code>stderr</code> and causes a breakpoint trap to end the program.</p></dd>
+<dt><code>NSADDIMAGE_OPTION_WITH_SEARCHING</code></dt>
+<dd><p>With this option, the <code>image_name</code> passed for the library and all its dependents is affected by the various <code>dyld</code> environment variables as if this library were linked into the program.</p></dd>
+<dt><code>NSADDIMAGE_OPTION_RETURN_ONLY_IF_LOADED</code></dt>
+<dd><p>With this option, this function returns <code>NULL</code> if the shared library was not loaded prior to the call to this function.</p></dd></dl></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> (“OS X ABI Mach-O File Format Reference”) data structure. This is a pointer to the start of the loaded image.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function loads the shared library specified by <code>image_name</code> into the current process, returning a pointer to the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure of the loaded image. Any libraries that the specified library depends on are also loaded.</p>
+<p>The <code>linkEdit</code> error handler is documented in the <code>NSModule(3)</code> man page.</p>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>.</p></div>  
+<a name="//apple_ref/c/func/NSAddLibrary" title="NSAddLibrary"></a><a name="//apple_ref/doc/c_ref/NSAddLibrary" title="NSAddLibrary"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibrary" title="NSAddLibrary"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_24"></a><h3 class="tight jump function" id="jumpTo_18">NSAddLibrary</h3>
+<p class="abstract">Adds a dynamic shared library to the search list.</p>
+<pre class="declaration">extern bool NSAddLibrary(
+   const char* pathName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>pathName</em></dt>
+<dd><p>A C string. Pass the name of a dynamic shared library.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> if the library was successfully added to the search list, <code>FALSE</code> otherwise.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code> instead.</p></div>  
+<div class="api specialConsiderations"><h5>Special Considerations</h5>
+<p>Instead of using this function, you should use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code> with the <code><!--a  -->NSADDIMAGE_OPTION_NONE<!--/a--></code> option.</p></div><a name="//apple_ref/c/func/NSAddLibraryWithSearching" title="NSAddLibraryWithSearching"></a><a name="//apple_ref/doc/c_ref/NSAddLibraryWithSearching" title="NSAddLibraryWithSearching"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSAddLibraryWithSearching" title="NSAddLibraryWithSearching"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_25"></a><h3 class="tight jump function" id="jumpTo_19">NSAddLibraryWithSearching</h3>
+<p class="abstract">Adds a dynamic shared library to the search list—using the various <code>dyld</code> environment variables—as if the library were linked into the program.</p>
+<pre class="declaration">extern bool NSAddLibraryWithSearching(
+   const char* pathName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>pathName</em></dt>
+<dd><p>A C string. Pass the name of a dynamic shared library.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> if the library was successfully added to the search list, <code>FALSE</code> otherwise.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code> instead.</p></div>  
+<div class="api specialConsiderations"><h5>Special Considerations</h5>
+<p>Instead of using this function, you should use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code> with the <code><!--a  -->NSADDIMAGE_OPTION_WITH_SEARCHING<!--/a--></code> option.</p></div><a name="//apple_ref/c/func/NSAddressOfSymbol" title="NSAddressOfSymbol"></a><a name="//apple_ref/doc/c_ref/NSAddressOfSymbol" title="NSAddressOfSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSAddressOfSymbol" title="NSAddressOfSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_26"></a><h3 class="tight jump function" id="jumpTo_20">NSAddressOfSymbol</h3>
+<p class="abstract">Returns the address in the program’s address space of the data represented by the given symbol. The data may be a variable, a constant, or the first instruction of a function.</p>
+<pre class="declaration">void* NSAddressOfSymbol(
+   NSSymbol symbol);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol</em></dt>
+<dd><p>A symbol reference. Pass the symbol whose address you wish to obtain.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the data represented by the given symbol.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>.</p></div>  <a name="//apple_ref/c/func/NSCreateObjectFileImageFromFile" title="NSCreateObjectFileImageFromFile"></a><a name="//apple_ref/doc/c_ref/NSCreateObjectFileImageFromFile" title="NSCreateObjectFileImageFromFile"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromFile" title="NSCreateObjectFileImageFromFile"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_27"></a><h3 class="tight jump function" id="jumpTo_21">NSCreateObjectFileImageFromFile</h3>
+<p class="abstract">Creates an image reference for a given Mach-O file.</p>
+<pre class="declaration">NSObjectFileImageReturnCode NSCreateObjectFileImageFromFile(
+   const char* pathName,
+   NSObjectFileImage* objectFileImage);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>pathName</em></dt>
+<dd><p>A C string. Pass the pathname to a Mach-O executable file. You must have previously built this file with the <code>-bundle</code> linker option; otherwise, this function returns an error.</p></dd>
+<dt><em>objectFileImage</em></dt>
+<dd><p>On output, a pointer to an <code>NSObjectFileImage</code> opaque data structure.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>See <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/tdef/NSObjectFileImageReturnCode">Mach-O Image Creation Return Codes</a></span>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Given a pathname to a Mach-O executable, this function creates and returns a <code>NSObjectFileImage</code> reference. The current implementation works only with bundles, so you must build the Mach-O executable file using the <code>-bundle</code> linker option.</p>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>.</p></div>  <a name="//apple_ref/c/func/NSCreateObjectFileImageFromMemory" title="NSCreateObjectFileImageFromMemory"></a><a name="//apple_ref/doc/c_ref/NSCreateObjectFileImageFromMemory" title="NSCreateObjectFileImageFromMemory"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSCreateObjectFileImageFromMemory" title="NSCreateObjectFileImageFromMemory"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_28"></a><h3 class="tight jump function" id="jumpTo_22">NSCreateObjectFileImageFromMemory</h3>
+<p class="abstract">Creates an image reference for a Mach-O file currently in memory.</p>
+<pre class="declaration">NSObjectFileImageReturnCode NSCreateObjectFileImageFromMemory(
+   const void* address,
+   size_t size,
+   NSObjectFileImage* objectFileImage);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>address</em></dt>
+<dd><p>A pointer to the memory block containing the Mach-O file contents. </p></dd>
+<dt><em>size</em></dt>
+<dd><p>The size of the memory block, in bytes.</p></dd>
+<dt><em>objectFileImage</em></dt>
+<dd><p>On output, a pointer to an <code>NSObjectFileImage</code> opaque data structure.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5><p>See <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/tdef/NSObjectFileImageReturnCode">Mach-O Image Creation Return Codes</a></span>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Given a pointer to a Mach-O file in memory, this function creates and returns an <code>NSObjectFileImage</code> reference. The current implementation works only with bundles, so you must build the Mach-O executable file using the <code>-bundle</code> linker option.</p>
+<p>The memory block that <code>address</code> points to, must be allocated with <code>vm_allocate</code> (<code>/usr/include/mach/vm_map.h</code>).</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSDestroyObjectFileImage">NSDestroyObjectFileImage</a></code>.</p></div>  
+<a name="//apple_ref/c/func/NSDestroyObjectFileImage" title="NSDestroyObjectFileImage"></a><a name="//apple_ref/doc/c_ref/NSDestroyObjectFileImage" title="NSDestroyObjectFileImage"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSDestroyObjectFileImage" title="NSDestroyObjectFileImage"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_29"></a><h3 class="tight jump function" id="jumpTo_23">NSDestroyObjectFileImage</h3>
+<p class="abstract">Releases the given object file image.</p>
+<pre class="declaration">bool NSDestroyObjectFileImage(
+   NSObjectFileImage objectFileImage);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>objectFileImage</em></dt>
+<dd><p>A reference to the object file image to destroy.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> if the image was successfully destroyed, <code>FALSE</code> if not.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>When this function is called, the dynamic loader calls <code>vm_deallocate</code> (<code>/usr/include/mach/vm_map.h</code>) on the memory pointed to by the <code>objectFileImage</code> parameter.</p>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code> in conjunction with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>.</p>
+<p>See also <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromMemory">NSCreateObjectFileImageFromMemory</a></code>.</p></div>  <a name="//apple_ref/c/func/NSIsSymbolNameDefined" title="NSIsSymbolNameDefined"></a><a name="//apple_ref/doc/c_ref/NSIsSymbolNameDefined" title="NSIsSymbolNameDefined"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefined" title="NSIsSymbolNameDefined"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_30"></a><h3 class="tight jump function" id="jumpTo_24">NSIsSymbolNameDefined</h3>
+<p class="abstract">Returns <code>TRUE</code> if the given symbol is defined in the current program.</p>
+<pre class="declaration">enum bool NSIsSymbolNameDefined(
+   const char* symbolName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbolName</em></dt>
+<dd><p>A C string. Pass the name of the symbol whose definition status you wish to discover.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> when the symbol is defined by any image loaded in the current process; <code>FALSE</code> when the symbol cannot be found.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p>
+<p>If you know the name of the library in which the symbol is likely to be located, you can use the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefinedWithHint">NSIsSymbolNameDefinedWithHint</a></code> <code><!--a--><!--/a--></code>function, which may be faster than this function. You should use the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefinedInImage">NSIsSymbolNameDefinedInImage</a></code> function to perform a two-level namespace lookup.</p></div>  <a name="//apple_ref/c/func/NSIsSymbolNameDefinedInImage" title="NSIsSymbolNameDefinedInImage"></a><a name="//apple_ref/doc/c_ref/NSIsSymbolNameDefinedInImage" title="NSIsSymbolNameDefinedInImage"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJDHGGD" title="NSIsSymbolNameDefinedInImage"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_31"></a><h3 class="tight jump function" id="jumpTo_25">NSIsSymbolNameDefinedInImage</h3>
+<p class="abstract">Returns <code>TRUE</code> if the given image contains the named symbol.</p>
+<pre class="declaration">enum bool NSIsSymbolNameDefinedInImage(
+   const struct mach_header* image,
+   const char* symbolName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> (<em>Mach-O Runtime Architecture</em>) data structure.</p></dd>
+<dt><em>symbolName</em></dt>
+<dd><p>A C string. Pass the name of the symbol.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> if the image contains a symbol with the given name, <code>false</code> otherwise.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p></div>  <a name="//apple_ref/c/func/NSIsSymbolNameDefinedWithHint" title="NSIsSymbolNameDefinedWithHint"></a><a name="//apple_ref/doc/c_ref/NSIsSymbolNameDefinedWithHint" title="NSIsSymbolNameDefinedWithHint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSIsSymbolNameDefinedWithHint" title="NSIsSymbolNameDefinedWithHint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_32"></a><h3 class="tight jump function" id="jumpTo_26">NSIsSymbolNameDefinedWithHint</h3>
+<p class="abstract">Returns <code>TRUE</code> if the given symbol is defined in the current program, with a hint specifying the name of the shared library likely to contain the symbol.</p>
+<pre class="declaration">enum bool NSIsSymbolNameDefinedWithHint(
+   const char* symbolName,
+   const char* libraryNameHint);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbolName</em></dt>
+<dd><p>A C string. Pass the name of the symbol whose definition status you wish to discover.</p></dd>
+<dt><em>libraryNameHint</em></dt>
+<dd><p>A C string. Pass any part of the name of the shared library that is likely to contain the symbol. It searches only the first shared library that matches. </p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> when the symbol is defined by any image loaded in the current process; <code>FALSE</code> when the symbol cannot be found.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p>
+<p>The library name you pass to this function allows it to determine a position in the list of loaded symbols from which to start the search. This can result in a considerably faster lookup search time than is possible using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefined">NSIsSymbolNameDefined</a></code>.</p>
+<p>Note that this function performs a flat lookup even if the symbol namespace of the current program has two levels. You should use the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSIsSymbolNameDefinedInImage">NSIsSymbolNameDefinedInImage</a></code> function to perform a two-level namespace lookup.</p></div>  <a name="//apple_ref/c/func/NSLibraryNameForModule" title="NSLibraryNameForModule"></a><a name="//apple_ref/doc/c_ref/NSLibraryNameForModule" title="NSLibraryNameForModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSLibraryNameForModule" title="NSLibraryNameForModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_33"></a><h3 class="tight jump function" id="jumpTo_27">NSLibraryNameForModule</h3>
+<p class="abstract">Returns the name of the library that contains the given module.</p>
+<pre class="declaration">const char* NSLibraryNameOfModule(
+   NSModule module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>module</em></dt>
+<dd><p>A module reference. Pass the module whose library name you wish to retrieve.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A C string containing the name of the library that contains the module. The string is owned by the dynamic linker and you should not free it.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>See <span class="content_text"><!--a target="_self" -->Building Mach-O Files<!--/a--></span> in <em>Mach-O Programming Topics</em> for more information about modules.</p></div>  <a name="//apple_ref/c/func/NSLinkModule" title="NSLinkModule"></a><a name="//apple_ref/doc/c_ref/NSLinkModule" title="NSLinkModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSLinkModule" title="NSLinkModule"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_34"></a><h3 class="tight jump function" id="jumpTo_28">NSLinkModule</h3>
+<p class="abstract">Links the given object file image as a module into the current program.</p>
+<pre class="declaration">NSModule NSLinkModule(
+   NSObjectFileImage objectFileImage,
+   const char* moduleName,
+   uint32_t options);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>objectFileImage</em></dt>
+<dd><p>An object file image reference. Pass a reference created using the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromFile">NSCreateObjectFileImageFromFile</a></code> function.</p></dd>
+<dt><em>moduleName</em></dt>
+<dd><p>A C string. Pass the absolute path to the object file image. GDB uses this path to retrieve debug symbol information from the library. </p></dd>
+<dt><em>options</em></dt>
+<dd><p>An <code>unsigned long</code> value. Pass one or more of the following bit masks or <code><!--a  -->NSLINKMODULE_OPTION_NONE<!--/a--></code> to specify no options:</p><dl class="termdef">	<dt><code>NSLINKMODULE_OPTION_BINDNOW</code></dt>
+<dd><p>The dynamic linker binds all undefined references immediately, rather than waiting until the references are actually used. All dependent libraries are also bound.</p></dd>
+<dt><code>NSLINKMODULE_OPTION_PRIVATE</code></dt>
+<dd><p>Do not add the global symbols from the module to the global symbol list. Instead, you must use the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupSymbolInModule">NSLookupSymbolInModule</a></code> function to obtain symbols from this module.</p></dd>
+<dt><code>NSLINKMODULE_OPTION_RETURN_ON_ERROR</code></dt>
+<dd><p>If an error occurs while binding the module, return <code>NULL</code>. You can then use the function <code>NSLinkEditError</code> to retrieve information about the error.</p><p>Without this option, this function calls the <code>linkEdit</code> error handler you have installed using the <code><!--a-->NSInstallLinkEditErrorHandlers<!--/a--></code> function. If you have not installed a link edit error handler, this function prints a message to the standard error stream and causes a breakpoint trap to end the program.</p></dd></dl></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A reference to the linked module.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>When you call this function, all libraries referenced by the given module are added to the library search list. Unless you pass the <code>NSLINKMODULE_OPTION_PRIVATE</code>, <code>NSLinkModule</code> adds all global symbols in the module to the global symbol list.</p>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code>.</p>
+<p>See <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/building_files.html#//apple_ref/doc/uid/TP40001828" target="_self">“Building Mach-O Files”</a></span> in <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001519" target="_self">“Mach-O Programming Topics”</a></span> for more information about modules.</p></div>  <a name="//apple_ref/c/func/NSLookupAndBindSymbol" title="NSLookupAndBindSymbol"></a><a name="//apple_ref/doc/c_ref/NSLookupAndBindSymbol" title="NSLookupAndBindSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbol" title="NSLookupAndBindSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_35"></a><h3 class="tight jump function" id="jumpTo_29">NSLookupAndBindSymbol</h3>
+<p class="abstract">Given a symbol name, returns the corresponding symbol from the global symbol table.</p>
+<pre class="declaration">NSSymbol NSLookupAndBindSymbol(
+   const char* symbolName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbolName</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the symbol you wish to find.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>The symbol reference for the requested symbol.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p>
+<p>On error, if you have installed a link edit error handler, it is called; otherwise, this function writes an error message to file descriptor 2 (usually the standard error stream, <code>stderr</code>) and causes a breakpoint trap to end the program.</p>
+<p>If you know the name of the library in which the symbol is likely to be located, you can use the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLookupAndBindSymbolWithHint">NSLookupAndBindSymbolWithHint</a></code> function, which may be faster than this function. You should use the <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> function to perform a two-level namespace lookup.</p></div>  <a name="//apple_ref/c/func/NSLookupAndBindSymbolWithHint" title="NSLookupAndBindSymbolWithHint"></a><a name="//apple_ref/doc/c_ref/NSLookupAndBindSymbolWithHint" title="NSLookupAndBindSymbolWithHint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupAndBindSymbolWithHint" title="NSLookupAndBindSymbolWithHint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_36"></a><h3 class="tight jump function" id="jumpTo_30">NSLookupAndBindSymbolWithHint</h3>
+<p class="abstract">Given a symbol name, returns the corresponding symbol from the global symbol table.</p>
+<pre class="declaration">NSSymbol NSLookupAndBindSymbolWithHint(
+   const char* symbolName,
+   const char* libraryNameHint);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbolName</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the symbol you wish to find.</p></dd>
+<dt><em>libraryNameHint</em></dt>
+<dd><p>A pointer to a C string. Pass any part of the name of the library that the symbol is likely to be found in.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>The symbol reference for the requested symbol.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>On error, if you have installed a link edit error handler, it is called; otherwise, this function writes an error message to file descriptor 2 (usually the standard error stream, <code>stderr</code>), and causes a breakpoint trap to end the program.</p>
+<p>Note that this function performs a flat lookup even if the symbol namespace of the current program has two levels. You should use the <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> function to perform a two-level namespace lookup.</p>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p></div>  <a name="//apple_ref/c/func/NSLookupSymbolInImage" title="NSLookupSymbolInImage"></a><a name="//apple_ref/doc/c_ref/NSLookupSymbolInImage" title="NSLookupSymbolInImage"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-BAJBEJJE" title="NSLookupSymbolInImage"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_37"></a><h3 class="tight jump function" id="jumpTo_31">NSLookupSymbolInImage</h3>
+<p class="abstract">Returns a reference to the specified symbol from the specified image.</p>
+<pre class="declaration">NSSymbol NSLookupSymbolInImage(
+   const struct mach_header* image,
+   const char* symbolName
+   uint32_t options);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image</em></dt>
+<dd><p>A pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure. Pass a pointer to the start of the image that contains the symbol. You can get this pointer from a shared library name using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSAddImage">NSAddImage</a></code>.</p><p>If the process does not have a two-level namespace, <code>NSLookupSymbolInImage</code> ignores this argument and searches for the symbol in the global symbol table.</p></dd>
+<dt><em>symbolName</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the symbol you wish to find.</p></dd>
+<dt><em>options</em></dt>
+<dd><p>A bit mask. Pass any of the following options:</p><dl class="termdef">	
+<dt><code>NSLOOKUPSYMBOLINIMAGE_OPTION_BIND</code></dt>
+<dd><p>Bind the nonlazy symbols of the module in the image that defines <code>symbolName</code> and let all lazy symbols in the module be bound on first call. You should pass this option when you expect the module to bind without errors (for example, a library supplied with the system). If, later, you call a lazy symbol, and the lazy symbol fails to bind, the runtime calls the link edit error handler you have installed using the <code><!--a-->NSInstallLinkEditErrorHandlers<!--/a--></code> function.</p><p>If there is no link edit error handler installed, the runtime prints a message to the standard error stream and causes a breakpoint trap to end the program.</p></dd>
+<dt><code>NSLOOKUPSYMBOLINIMAGE_OPTION_BIND_NOW</code></dt>
+<dd><p>Bind all the nonlazy and lazy symbols of the module in the image that defines the symbol name, and bind symbols in the dependent libraries as needed. </p><p>Pass this option for a library that might not be expected to bind without errors but that links against only system-supplied libraries that are themselves expected to bind without any errors.</p></dd>
+<dt><code>NSLOOKUPSYMBOLINIMAGE_OPTION_BIND_FULLY</code></dt>
+<dd><p>Bind all the symbols of the module that defines <code>symbolName</code> and all the dependent symbols of all needed libraries.</p><p>Because it may take a long time to fully bind the image, you should pass this option only for libraries that cannot bind other symbols once executed, such as code that implements signal handlers.</p></dd>
+<dt><code>NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR</code></dt>
+<dd><p>Return <code>NULL</code> if the symbol cannot be bound.</p></dd></dl></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>The symbol reference for the requested symbol, or <code>NULL</code> if the symbol cannot be found and you passed the option <code>NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR</code>.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>On error, if you have installed a link edit error handler, it is called; otherwise, this function writes an error message to file descriptor 2 (usually the standard error stream, <code>stderr</code>) and causes a breakpoint trap to end the program.</p>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>.</p></div>  
+<a name="//apple_ref/c/func/NSLookupSymbolInModule" title="NSLookupSymbolInModule"></a><a name="//apple_ref/doc/c_ref/NSLookupSymbolInModule" title="NSLookupSymbolInModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSLookupSymbolInModule" title="NSLookupSymbolInModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_38"></a><h3 class="tight jump function" id="jumpTo_32">NSLookupSymbolInModule</h3>
+<p class="abstract">Given a module reference, returns a reference to the symbol with the given name.</p>
+<pre class="declaration">NSSymbol NSLookupSymbolInModule(
+   NSModule module,
+   const char* symbolName);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>module</em></dt>
+<dd><p>A module reference. Pass the module that contains the symbol.</p></dd>
+<dt><em>symbolname</em></dt>
+<dd><p>A pointer to a C string. Pass the name of the symbol to look up.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>The symbol reference or <code>NULL</code> if the symbol cannot be found.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlsym">dlsym</a></code>.</p></div>  <a name="//apple_ref/c/func/NSModuleForSymbol" title="NSModuleForSymbol"></a><a name="//apple_ref/doc/c_ref/NSModuleForSymbol" title="NSModuleForSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSModuleForSymbol" title="NSModuleForSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_39"></a><h3 class="tight jump function" id="jumpTo_33">NSModuleForSymbol</h3>
+<p class="abstract">Returns a reference to the module containing the given symbol.</p>
+<pre class="declaration">NSModule NSModuleForSymbol(
+   NSSymbol symbol);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol</em></dt>
+<dd><p>A symbol reference. Pass the symbol whose module you wish to obtain.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A reference to the module that contains the given symbol.</p></div>   <a name="//apple_ref/c/func/NSNameOfModule" title="NSNameOfModule"></a><a name="//apple_ref/doc/c_ref/NSNameOfModule" title="NSNameOfModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfModule" title="NSNameOfModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_40"></a><h3 class="tight jump function" id="jumpTo_34">NSNameOfModule</h3>
+<p class="abstract">Returns the name of the given module.</p>
+<pre class="declaration">const char* NSNameOfModule(
+   NSModule module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>module</em></dt>
+<dd><p>A module reference. Pass the module whose name you wish to retrieve.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A C string containing the name of the module. The string is owned by the dynamic linker and you should not free it.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>See “<span class="content_text"><!--a target="_self" -->Building Mach-O Files<!--/a--></span>” in <em>OS X ABI File Format Reference</em>.for more information about modules.</p></div>  <a name="//apple_ref/c/func/NSNameOfSymbol" title="NSNameOfSymbol"></a><a name="//apple_ref/doc/c_ref/NSNameOfSymbol" title="NSNameOfSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSNameOfSymbol" title="NSNameOfSymbol"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_41"></a><h3 class="tight jump function" id="jumpTo_35">NSNameOfSymbol</h3>
+<p class="abstract">Returns the name of the given symbol.</p>
+<pre class="declaration">const char* NSNameOfSymbol(
+   NSSymbol symbol);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol</em></dt>
+<dd><p>A symbol reference. Pass the symbol whose name you wish to obtain.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a C string containing the name of the reference. The dynamic linker owns this string and you should not free it.</p></div>   <a name="//apple_ref/c/func/NSUnLinkModule" title="NSUnLinkModule"></a><a name="//apple_ref/doc/c_ref/NSUnLinkModule" title="NSUnLinkModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-NSUnLinkModule" title="NSUnLinkModule"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_42"></a><h3 class="tight jump function" id="jumpTo_36">NSUnLinkModule</h3>
+<p class="abstract">Unlinks the given module from the current program.</p>
+<pre class="declaration">bool NSUnLinkModule(
+   NSModule module,
+   uint32_t options);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>module</em></dt>
+<dd><p>A module reference. Pass a reference to a module that you have previously linked using the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSLinkModule">NSLinkModule</a></code> function.</p></dd>
+<dt><em>options</em></dt>
+<dd><p>An <code>unsigned long</code> value. You can specify one or more of the following bit masks:</p><dl class="termdef">	
+<dt><code>NSUNLINKMODULE_OPTION_NONE</code></dt>
+<dd><p>Unlink the module and deallocate the memory it occupies.</p></dd>
+<dt><code>NSUNLINKMODULE_OPTION_KEEP_MEMORY_MAPPED</code></dt>
+<dd><p>Unlink the module, but do not deallocate the memory it occupies. Addresses that reside within the module remain valid. You cannot unmap this memory later; it’s released when the process exits or is terminated.</p></dd>
+<dt><code>NSUNLINKMODULE_OPTION_RESET_LAZY_REFERENCES</code></dt>
+<dd><p>Unlink the module and reset lazy references from other modules that are bound to the module. You can then link a new module that implements the same symbols, and the function call references are bound to the new module when accessed.</p></dd></dl></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>For portability and efficiency, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlopen">dlopen</a></code> in conduction with <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/dlclose">dlclose</a></code>.</p>
+<p>See <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/building_files.html#//apple_ref/doc/uid/TP40001828" target="_self">“Building Mach-O Files”</a></span> in <span class="content_text"><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001519" target="_self">“Mach-O Programming Topics”</a></span> for more information about modules.</p></div>  
+<div class="api specialConsiderations"><h5>Special Considerations</h5>
+<p>In OS X v10.2 and later, <code>NSUNLINKMODULE_OPTION_RESET_LAZY_REFERENCES</code> can be used only with PowerPC CPU executables.</p></div><a name="//apple_ref/c/func/_dyld_bind_fully_image_containing_address" title="_dyld_bind_fully_image_containing_address"></a><a name="//apple_ref/doc/c_ref/_dyld_bind_fully_image_containing_address" title="_dyld_bind_fully_image_containing_address"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_fully_image_containing_address" title="_dyld_bind_fully_image_containing_address"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_43"></a><h3 class="tight jump function" id="jumpTo_37">_dyld_bind_fully_image_containing_address</h3>
+<p class="abstract">Finds the image containing the specified address and fully binds all the modules within it.</p>
+<pre class="declaration">bool _dyld_bind_fully_image_containing_address(
+   const void* address);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>address</em></dt>
+<dd><p>A pointer to an address located somewhere within a loaded image.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A Boolean value. If <code>true</code>, the address resides somewhere within a loaded image, and so <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_bind_fully_image_containing_address">_dyld_bind_fully_image_containing_address</a></code> attempted to bind that image. If <code>false</code>, the address does not reside within a loaded image, and so <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_bind_fully_image_containing_address">_dyld_bind_fully_image_containing_address</a></code> did nothing.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>You can use this function to bind error handing code  like signal handlers when you have the address of a function, but not the  symbol name. This may bind more symbols than are actually needed.</p>
+<p>If the image containing the address  is a flat namespace image, multiple-defined errors can occur even if the symbols are not really used. Errors in binding are reported through the normal error reporting mechanisms.</p></div>  <a name="//apple_ref/c/func/_dyld_bind_objc_module" title="_dyld_bind_objc_module"></a><a name="//apple_ref/doc/c_ref/_dyld_bind_objc_module" title="_dyld_bind_objc_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_bind_objc_module" title="_dyld_bind_objc_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_44"></a><h3 class="tight jump function" id="jumpTo_38">_dyld_bind_objc_module</h3>
+<p class="abstract">Binds the module that contains a given Objective-C address.</p>
+<pre class="declaration">void _dyld_bind_objc_module(
+   const void* objc_module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>objc_module</em></dt>
+<dd><p>A pointer. Pass any address residing within the <code>__OBJC,__module</code> section of a loaded Mach-O file.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function is used by the Objective-C runtime library.</p></div>  <a name="//apple_ref/c/func/_dyld_func_lookup" title="_dyld_func_lookup"></a><a name="//apple_ref/doc/c_ref/_dyld_func_lookup" title="_dyld_func_lookup"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_func_lookup" title="_dyld_func_lookup"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_45"></a><h3 class="tight jump function" id="jumpTo_39">_dyld_func_lookup</h3>
+<p class="abstract">Obtains the address of the implementation of a <code>dyld</code> library function.</p>
+<pre class="declaration">int _dyld_func_lookup(
+   const char* dyld_func_name,
+   void** address);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>dyld_func_name</em></dt>
+<dd><p>A pointer to a C string. Pass the name of a <code>dyld</code> library function.</p></dd>
+<dt><em>address</em></dt>
+<dd><p>A pointer to a pointer. On output, points to the address of the function if the function is found, otherwise the value is undefined.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>An integer value. Nonzero if the function was found. Zero if the function was not found.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function is used by the library code that implements the <code>dyld</code> functions.</p></div>  <a name="//apple_ref/c/func/_dyld_get_image_header" title="_dyld_get_image_header"></a><a name="//apple_ref/doc/c_ref/_dyld_get_image_header" title="_dyld_get_image_header"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_header" title="_dyld_get_image_header"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_46"></a><h3 class="tight jump function" id="jumpTo_40">_dyld_get_image_header</h3>
+<p class="abstract">Returns the data structure for the header of a specified image. The image is specified by index into the list of images maintained by <code>dyld</code> for the current process.</p>
+<pre class="declaration">const struct mach_header* _dyld_get_image_header(
+   uint32_t image_index);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image_index</em></dt>
+<dd><p>A long integer. Pass a zero-based index indicating the position of the image in the list of images loaded into the address space of the current process.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure of the specified image. If <code>image_index</code> is greater than the number of loaded images, this pointer is null.</p></div>   <a name="//apple_ref/c/func/_dyld_get_image_name" title="_dyld_get_image_name"></a><a name="//apple_ref/doc/c_ref/_dyld_get_image_name" title="_dyld_get_image_name"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_name" title="_dyld_get_image_name"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_47"></a><h3 class="tight jump function" id="jumpTo_41">_dyld_get_image_name</h3>
+<p class="abstract">Retrieves the name of an image.</p>
+<pre class="declaration">const char* _dyld_get_image_name(
+   uint32_t image_index);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image_index</em></dt>
+<dd><p>A long integer. Pass a zero-based index indicating the position of the image in the list of images loaded into the address space of the current process.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A pointer to a C string. If <code>image_index</code> is greater than the number of loaded images, the string pointer is null.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>Returns the name of the image located at the given index into the global image list.</p></div>  <a name="//apple_ref/c/func/_dyld_get_image_vmaddr_slide" title="_dyld_get_image_vmaddr_slide"></a><a name="//apple_ref/doc/c_ref/_dyld_get_image_vmaddr_slide" title="_dyld_get_image_vmaddr_slide"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_image_vmaddr_slide" title="_dyld_get_image_vmaddr_slide"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_48"></a><h3 class="tight jump function" id="jumpTo_42">_dyld_get_image_vmaddr_slide</h3>
+<p class="abstract">Returns the virtual memory address slide amount of an image.</p>
+<pre class="declaration">intptr_t _dyld_get_image_vmaddr_slide(
+   uint32_t image_index);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>image_index</em></dt>
+<dd><p>A long integer. Pass a zero-based index indicating the position of the image in the list of images loaded into the address space of the current process.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>If <code>image_index</code> is greater than or equal to the value returned by <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_image_count">_dyld_image_count</a></code>, zero. Otherwise, the <code>vmaddr_slide</code> value for the specified image.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>When the dynamic linker loads an image, the image must be mapped into the virtual address space of the process at an unoccupied address. The dynamic linker accomplishes this by adding a value—the virtual memory slide amount—to the base address of the image.</p></div>  <a name="//apple_ref/c/func/_dyld_get_objc_module_sect_for_module" title="_dyld_get_objc_module_sect_for_module"></a><a name="//apple_ref/doc/c_ref/_dyld_get_objc_module_sect_for_module" title="_dyld_get_objc_module_sect_for_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_get_objc_module_sect_for_module" title="_dyld_get_objc_module_sect_for_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_49"></a><h3 class="tight jump function" id="jumpTo_43">_dyld_get_objc_module_sect_for_module</h3>
+<p class="abstract">Obtains the size and starting location of an Objective-C module.</p>
+<pre class="declaration">void _dyld_get_objc_module_sect_for_module(
+   NSModule module,
+   void** objc_module,
+   size_t* size);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>module</em></dt>
+<dd><p>A module reference from an image.</p></dd>
+<dt><em>objc_modulet</em></dt>
+<dd><p>A pointer to a pointer. On output, contains a pointer to the start of the <code>__OBJC,__module</code> section for the specified module.</p></dd>
+<dt><em>size</em></dt>
+<dd><p>A pointer to a long integer. On output, the long integer contains the a value indicating the size of the output module.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function is used by the Objective-C runtime library.</p></div>  <a name="//apple_ref/c/func/_dyld_image_containing_address" title="_dyld_image_containing_address"></a><a name="//apple_ref/doc/c_ref/_dyld_image_containing_address" title="_dyld_image_containing_address"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_containing_address" title="_dyld_image_containing_address"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_50"></a><h3 class="tight jump function" id="jumpTo_44">_dyld_image_containing_address</h3>
+<p class="abstract">Returns whether or not a specified address is within any loaded image.</p>
+<pre class="declaration">bool _dyld_image_containing_address(
+   const void* address);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>address</em></dt>
+<dd><p>An unsigned long integer. Pass the address that you wish to obtain status about.</p></dd></dl></div>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p><code>TRUE</code> if the address is located within an image loaded by the dynamic linker, <code>FALSE</code> otherwise.</p></div>   <a name="//apple_ref/c/func/_dyld_image_count" title="_dyld_image_count"></a><a name="//apple_ref/doc/c_ref/_dyld_image_count" title="_dyld_image_count"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_image_count" title="_dyld_image_count"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_51"></a><h3 class="tight jump function" id="jumpTo_45">_dyld_image_count</h3>
+<p class="abstract">Returns the number of images that <code>dyld</code> has mapped into the address space of the current process.</p>
+<pre class="declaration">uint32_t _dyld_image_count(void);
+</pre>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A long integer containing the number of images that <code>dyld</code> has mapped into the address space of the current process.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function provides you with a count of the number of the images in the image list. You can use this number to iterate the images loaded into the address space of the current process, using functions such as <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_header">_dyld_get_image_header</a></code> and <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_get_image_name">_dyld_get_image_name</a></code>.</p></div>  <a name="//apple_ref/c/func/_dyld_launched_prebound" title="_dyld_launched_prebound"></a><a name="//apple_ref/doc/c_ref/_dyld_launched_prebound" title="_dyld_launched_prebound"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_launched_prebound" title="_dyld_launched_prebound"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_52"></a><h3 class="tight jump function" id="jumpTo_46">_dyld_launched_prebound</h3>
+<p class="abstract">Returns whether or not the dynamic linker was able to launch the program with the prebinding optimization enabled.</p>
+<pre class="declaration">bool _dyld_launched_prebound(void);
+</pre>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A Boolean value. <code>TRUE</code> if the program was launched successfully using the prebound state; <code>FALSE</code> if the either the program was not prebound or the prebinding couldn’t be used for some reason.</p></div>   
+<div class="api discussion"><h5>Discussion</h5>
+<p>If the program was not successfully launched with the prebinding optimization, the linker did not prebind the program, the addresses of some images overlapped and so the linker could not use the prebound addresses, or some other problem occurred. In any case, the program continues to launch, but it runs slower than with prebinding enabled.</p></div>  <a name="//apple_ref/c/func/_dyld_lookup_and_bind" title="_dyld_lookup_and_bind"></a><a name="//apple_ref/doc/c_ref/_dyld_lookup_and_bind" title="_dyld_lookup_and_bind"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind" title="_dyld_lookup_and_bind"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_53"></a><h3 class="tight jump function" id="jumpTo_47">_dyld_lookup_and_bind</h3>
+<p class="abstract">Finds the given symbol name and binds it into the program.</p>
+<pre class="declaration">void _dyld_lookup_and_bind(
+   const char* symbol_name,
+   void ** address
+   NSModule* module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol_name</em></dt>
+<dd><p>A pointer to a C string. Specify the name of the symbol to bind.</p></dd>
+<dt><em>address</em></dt>
+<dd><p>A pointer to a pointer. On output, points to the address of the symbol specified by <code>symbol_name</code>. This parameter is optional; pass <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd>
+<dt><em>module</em></dt>
+<dd><p>A pointer to a module pointer. On output, the module pointer contains the module of the symbol specified by <code>symbol_name</code>. This parameter is optional; specify <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p>
+<p>You can use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_lookup_and_bind">_dyld_lookup_and_bind</a></code> to find a given symbol name in the global search list and bind it (and all other defined symbols in the same module) into the program.</p>
+<p>If the program is prebound and you know the name of the library that contains the symbol, consider using <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind_with_hint">_dyld_lookup_and_bind_with_hint</a></code> instead.</p></div>  <a name="//apple_ref/c/func/_dyld_lookup_and_bind_fully" title="_dyld_lookup_and_bind_fully"></a><a name="//apple_ref/doc/c_ref/_dyld_lookup_and_bind_fully" title="_dyld_lookup_and_bind_fully"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_fully" title="_dyld_lookup_and_bind_fully"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_54"></a><h3 class="tight jump function" id="jumpTo_48">_dyld_lookup_and_bind_fully</h3>
+<p class="abstract">Finds the module containing the specified symbol and fully binds all the symbol references within it.</p>
+<pre class="declaration">void _dyld_lookup_and_bind_fully(
+   const char* symbol_name,
+   void** address,
+   NSModule* module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol_name</em></dt>
+<dd><p>A pointer to a C string. Specify the name of the symbol to bind.</p></dd>
+<dt><em>address</em></dt>
+<dd><p>A pointer to a pointer. On output, points to the address of the specified symbol.</p></dd>
+<dt><em>module</em></dt>
+<dd><p>A pointer to a pointer. On output, the pointer is set to the address of the module in which the specified symbol resides.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>You can use this function to bind modules containing signal handlers or other error handling code that cannot be initialized lazily.</p>
+<p>Errors in binding are reported through the normal mechanisms.</p></div>  <a name="//apple_ref/c/func/_dyld_lookup_and_bind_objc" title="_dyld_lookup_and_bind_objc"></a><a name="//apple_ref/doc/c_ref/_dyld_lookup_and_bind_objc" title="_dyld_lookup_and_bind_objc"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_objc" title="_dyld_lookup_and_bind_objc"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_55"></a><h3 class="tight jump function" id="jumpTo_49">_dyld_lookup_and_bind_objc</h3>
+<p class="abstract">Obtains and binds the Objective-C module that contains the specified symbol.</p>
+<pre class="declaration">void _dyld_lookup_and_bind_objc(
+   const char* symbol_name,
+   void** address,
+   NSModule* module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol_name</em></dt>
+<dd><p>A pointer to a C string. Specify the name of the symbol to bind, such as <code>.objc_class_name_Foo</code>.</p></dd>
+<dt><em>address</em></dt>
+<dd><p>A pointer to a pointer. On output, points to the address of the symbol specified by <code>symbol_name</code>. This parameter is optional; pass <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd>
+<dt><em>module</em></dt>
+<dd><p>A pointer to a module pointer. On output, the module pointer contains the module of the symbol specified by <code>symbol_name</code>. This parameter is optional; specify <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>This routine is used by the Objective-C runtime library. It performs the same function as <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/_dyld_lookup_and_bind">_dyld_lookup_and_bind</a></code> but, for performance reasons, does not update the symbol pointers if the symbol is in a bound module. An Objective-C symbol such as <code>.objc_class_name_Object</code> is never used by a symbol pointer, and updating the symbol pointers is a relatively expensive operation; so this provides a way for the Objective-C runtime to avoid that overhead.</p></div>  <a name="//apple_ref/c/func/_dyld_lookup_and_bind_with_hint" title="_dyld_lookup_and_bind_with_hint"></a><a name="//apple_ref/doc/c_ref/_dyld_lookup_and_bind_with_hint" title="_dyld_lookup_and_bind_with_hint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_lookup_and_bind_with_hint" title="_dyld_lookup_and_bind_with_hint"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_56"></a><h3 class="tight jump function" id="jumpTo_50">_dyld_lookup_and_bind_with_hint</h3>
+<p class="abstract">Finds the given symbol name and binds it into the program, with a hint to allow <code>dyld</code> to speed up the symbol search for a prebound program.</p>
+<pre class="declaration">void _dyld_lookup_and_bind_with_hint(
+   const char* symbol_name,
+   const char* library_name_hint,
+   void** address,
+   NSModule* module);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>symbol_name</em></dt>
+<dd><p>A pointer to a C string. Specify the name of the symbol to bind.</p></dd>
+<dt><em>library_name_hint</em></dt>
+<dd><p>A pointer to a C string. Specify the name of the library in which the symbol is probably located. The dynamic linker compares this name with the actual library install names using the standard C library function <code>strstr</code>.</p></dd>
+<dt><em>address</em></dt>
+<dd><p>A pointer to a pointer. On output, points to the address of the symbol specified by <code>symbol_name</code>. This parameter is optional; pass <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd>
+<dt><em>module</em></dt>
+<dd><p>A pointer to a module pointer. On output, the module pointer contains the module of the symbol specified by <code>symbol_name</code>. This parameter is optional; specify <code>NULL</code> for this pointer on input if you do not want to retrieve this data.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>Deprecated in OS X v10.4. Use <code><a href="./OS X ABI Dynamic Loader Reference_files/OS X ABI Dynamic Loader Reference.html">NSLookupSymbolInImage</a></code> instead.</p>
+<p>You can use <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_lookup_and_bind_with_hint">_dyld_lookup_and_bind_with_hint</a></code> to quickly find a given symbol name in the global search list of a prebound program and bind the symbol (and all other defined symbols in the same module) into the program.</p></div>  <a name="//apple_ref/c/func/_dyld_moninit" title="_dyld_moninit"></a><a name="//apple_ref/doc/c_ref/_dyld_moninit" title="_dyld_moninit"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_moninit" title="_dyld_moninit"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_57"></a><h3 class="tight jump function" id="jumpTo_51">_dyld_moninit</h3>
+<p class="abstract">This function is used by the profiling routine <code>moninit</code> to allow images other than the main executable to be profiled.</p>
+<pre class="declaration">void _dyld_moninit( void (*monaddition)(
+   char* lowpc,
+   char* highpc);
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>monaddition</em></dt>
+<dd><p>A pointer to a callback function. The callback is called when an image is first mapped in.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>This function is usually called by the profiling runtime (specifically, from the <code><!--a-->moninit<!--/a--></code> function). It is documented here for completeness. See the man page for <code><!--a-->moninit<!--/a--></code> and <code><!--a-->monaddtion<!--/a--></code> for further information.</p></div>  <a name="//apple_ref/c/func/_dyld_present" title="_dyld_present"></a><a name="//apple_ref/doc/c_ref/_dyld_present" title="_dyld_present"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_present" title="_dyld_present"></a>
+<a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_58"></a><h3 class="tight jump function" id="jumpTo_52">_dyld_present</h3>
+<p class="abstract">Indicates whether or not the dynamic linker is loaded into the current program</p>
+<pre class="declaration">bool _dyld_present (void);
+</pre>
+<div class="return_value"><h5 class="tight">Return Value</h5>
+<p>A Boolean value indicating the presence of <code>dyld</code>. This value is <code>FALSE</code> if <code>dyld</code> is not loaded in the current process, and <code>TRUE</code> if <code>dyld</code> is loaded in the current process.</p></div>   <a name="//apple_ref/c/func/_dyld_register_func_for_add_image" title="_dyld_register_func_for_add_image"></a><a name="//apple_ref/doc/c_ref/_dyld_register_func_for_add_image" title="_dyld_register_func_for_add_image"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_add_image" title="_dyld_register_func_for_add_image"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_59"></a><h3 class="tight jump function" id="jumpTo_53">_dyld_register_func_for_add_image</h3>
+<p class="abstract">Registers a function to be called by the dynamic linker runtime when an image is added to the program.</p>
+<pre class="declaration">void _dyld_register_func_for_add_image(
+   void (*func)(struct mach_header* mh,         intptr_t vmaddr_slide));
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>func</em></dt>
+<dd><p>A pointer to a callback function that accepts a pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure and a virtual memory slide amount. The virtual memory slide amount specifies the difference between the address at which the image was linked and the address at which the image is loaded.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>When you call <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_register_func_for_add_image">_dyld_register_func_for_add_image</a></code>, the dynamic linker runtime calls the specified callback (<code><!--a-->func<!--/a--></code>) once for each of the images that are currently loaded into the program. When a new image is added to the program, your callback is called again with the <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> for the new image, and the virtual memory slide amount of the new image.</p>
+<p>You might use this, for example, in implementing a runtime system, such as the Objective-C runtime, to discover when new images are added to the program.</p></div>  <a name="//apple_ref/c/func/_dyld_register_func_for_link_module" title="_dyld_register_func_for_link_module"></a><a name="//apple_ref/doc/c_ref/_dyld_register_func_for_link_module" title="_dyld_register_func_for_link_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_link_module" title="_dyld_register_func_for_link_module"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_60"></a><h3 class="tight jump function" id="jumpTo_54">_dyld_register_func_for_link_module</h3>
+<p class="abstract">Registers a function to be called by the dynamic linker runtime when a module is linked into the program.</p>
+<pre class="declaration">void _dyld_register_func_for_link_module(
+   void (*func)(NSModule module));
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>func</em></dt>
+<dd><p>A pointer to a callback that accepts a module reference.</p></dd></dl></div>
+<div class="api discussion"><h5>Discussion</h5>
+<p>When you call <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/doc/c_ref/_dyld_register_func_for_link_module">_dyld_register_func_for_link_module</a></code>, the dynamic linker runtime calls the specified callback (<code><!--a-->func<!--/a--></code>) once for each module that is currently linked into the program. When a new module is linked into the program, the <code>func</code> callback is called again for that module.</p></div>  <a name="//apple_ref/c/func/_dyld_register_func_for_remove_image" title="_dyld_register_func_for_remove_image"></a><a name="//apple_ref/doc/c_ref/_dyld_register_func_for_remove_image" title="_dyld_register_func_for_remove_image"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-_dyld_register_func_for_remove_image" title="_dyld_register_func_for_remove_image"></a><a name="//apple_ref/doc/uid/TP40001398-CH1g-DontLinkElementID_61"></a><h3 class="tight jump function" id="jumpTo_55">_dyld_register_func_for_remove_image</h3>
+<p class="abstract">Registers a function to be called by the dynamic linker runtime when an image is removed from the program.</p>
+<pre class="declaration">void _dyld_register_func_for_remove_image(
+   void (*func) (struct mach_header* mh),
+   intptr_t vmaddr_slide) );
+</pre>
+<div class="api parameters"><h5>Parameters</h5><dl class="termdef">
+<dt><em>func</em></dt>
+<dd><p>A pointer to a callback function that accepts a pointer to a <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/Reference/reference.html#//apple_ref/c/tag/mach_header" target="_self">mach_header</a></code> data structure and a virtual memory slide amount. The virtual memory slide amount specifies the difference between the address at which the image was linked and the address at which the image is loaded.</p></dd></dl></div></section><section><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_5" title="Constants"></a><h2 class="jump" id="jumpTo_56">Constants</h2><a name="//apple_ref/c/tdef/NSObjectFileImageReturnCode" title="Mach-O Image Creation Return Codes" role="Enum"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageReturnCode" title="Mach-O Image Creation Return Codes" role="Enum"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-SW1" title="Mach-O Image Creation Return Codes" role="Enum"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_62"></a><h3 class="constantGroup">Mach-O Image Creation Return Codes</h3><p class="abstract">Potential return values when creating a Mach-O image.</p><pre class="declaration">typedef enum {
+   NSObjectFileImageFailure,
+   NSObjectFileImageSuccess,
+   NSObjectFileImageInappropriateFile,
+   NSObjectFileImageArch,
+   NSObjectFileImageFormat,
+   NSObjectFileImageAccess
+} NSObjectFileImageReturnCode;
+</pre><h5 class="tight">Constants</h5><dl class="termdef"><a name="//apple_ref/c/econst/NSObjectFileImageSuccess" title="NSObjectFileImageSuccess"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageSuccess" title="NSObjectFileImageSuccess"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_63"></a><dt><code class="jump constantName" id="jumpTo_57">NSObjectFileImageSuccess</code></dt><dd><p>The image creation operation was completed successfully.</p></dd><a name="//apple_ref/c/econst/NSObjectFileImageFailure" title="NSObjectFileImageFailure"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageFailure" title="NSObjectFileImageFailure"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_64"></a><dt><code class="jump constantName" id="jumpTo_58">NSObjectFileImageFailure</code></dt><dd><p>The image creation operation was not successfully completed.</p><p>When this value is returned, an error message is printed to the standard error stream.</p></dd><a name="//apple_ref/c/econst/NSObjectFileImageInappropriateFile" title="NSObjectFileImageInappropriateFile"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageInappropriateFile" title="NSObjectFileImageInappropriateFile"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_65"></a><dt><code class="jump constantName" id="jumpTo_59">NSObjectFileImageInappropriateFile</code></dt><dd><p>The Mach-O file is not of a type the called function can operate upon.</p></dd><a name="//apple_ref/c/econst/NSObjectFileImageArch" title="NSObjectFileImageArch"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageArch" title="NSObjectFileImageArch"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_66"></a><dt><code class="jump constantName" id="jumpTo_60">NSObjectFileImageArch</code></dt><dd><p>The specified Mach-O file is for a different CPU architecture.</p></dd><a name="//apple_ref/c/econst/NSObjectFileImageFormat" title="NSObjectFileImageFormat"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageFormat" title="NSObjectFileImageFormat"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_67"></a><dt><code class="jump constantName" id="jumpTo_61">NSObjectFileImageFormat</code></dt><dd><p>The specified file or memory block does not appear to point to a Mach-O file.</p></dd><a name="//apple_ref/c/econst/NSObjectFileImageAccess" title="NSObjectFileImageAccess"></a><a name="//apple_ref/doc/c_ref/NSObjectFileImageAccess" title="NSObjectFileImageAccess"></a><a name="//apple_ref/doc/uid/TP40001398-CH209-DontLinkElementID_68"></a><dt><code class="jump constantName" id="jumpTo_62">NSObjectFileImageAccess</code></dt><dd><p>The access permissions for the specified file do not permit the creation of the image.</p></dd></dl><div class="api discussion"><h5>Discussion</h5><p>These return values are returned from <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromFile">NSCreateObjectFileImageFromFile</a></code> and <code><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#//apple_ref/c/func/NSCreateObjectFileImageFromMemory">NSCreateObjectFileImageFromMemory</a></code>.</p></div>  <div class="api declaredIn"><h5>Declared In</h5><code class="HeaderFile">mach-o/dyld.h</code></div></section>
+        <div id="pageNavigationLinks_bottom" class="pageNavigationLinks">
+            <a class="nextLink" rel="next" href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/RevisionHistory/RevisionHistory.html">Next</a>
+        </div><br>
+        <div class="copyright"><br><hr><div align="center"><p class="content_text" lang="en" dir="ltr"> Copyright © 2003, 2005 Apple Computer, Inc. All Rights Reserved. <a href="http://www.apple.com/legal/internet-services/terms/site.html" target="_blank">Terms of Use</a>   |  <a href="http://www.apple.com/privacy/" target="_blank">Privacy Policy</a>  |  Updated: 2005-11-09</p></div></div>
+
+        <div id="pediaWindow">
+            <div id="pediaHeader"></div>
+            <div id="pediaBody"></div>
+        </div>
+    </article>
+
+    <div id="blackout">
+    <div id="preload"></div>
+</div>
+<div id="leave_feedback" class="button" role="button" tabindex="0">Provide Feedback</div>
+<div id="modal" aria-hidden="true">
+    <div id="closebox" tabindex="0" aria-label="Close feedback form" role="button"></div>
+    <div id="sending" class="hidden">
+        <h2 tabindex="0">Sending feedback…</h2>
+        <div id="sending_img"></div>
+    </div>
+    <div id="error" class="hidden">
+        <h2 tabindex="0">We’re sorry, an error has occurred.</h2>
+        <p>Please try submitting your feedback later.</p>
+        <div id="error_icon"></div>
+    </div>
+    <div id="success" class="hidden">
+        <h2 tabindex="0">Thank you for providing feedback!</h2>
+        <p>Your input helps improve our developer documentation.</p>
+        <div id="thank_you_icon"></div>
+    </div>
+    
+    <form id="feedback" action="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/MachOReference/Reference/reference.html#" method="post">
+        <div class="left-leaf">
+            <h2 id="helpful_title" data-asterisk="a1" tabindex="0">How helpful is this document?</h2>     
+            <sup id="a1" class="asterisk" aria-hidden="true">*</sup>
+
+            <div id="star_group" role="radiogroup" aria-required="true">
+                <label> 
+                    <input class="radio" type="radio" name="helped" value="1"> 
+                    Very helpful
+                </label>
+                <label> 
+                    <input class="radio" type="radio" name="helped" value="2"> 
+                    Somewhat helpful
+                </label>
+                <label>
+                    <input class="radio" type="radio" name="helped" value="3"> 
+                    Not helpful
+                </label>
+            </div>
+        </div>
+        <div class="right-leaf">
+            <h2>How can we improve this document?</h2>
+            <div id="improve" class="checkboxes">
+                <label>
+                    <input type="checkbox" name="typo"> 
+                    Fix typos or links
+                </label>
+                <label>
+                    <input type="checkbox" name="infoIncorrect"> 
+                    Fix incorrect information
+                </label>
+                <label>
+                    <input type="checkbox" name="needs_examples"> 
+                    Add or update code samples
+                </label>
+                <label>
+                    <input type="checkbox" name="needs_art"> 
+                    Add or update illustrations
+                </label>
+                <label>
+                    <input type="checkbox" name="missingInfo"> 
+                    Add information about...
+                </label>
+            </div>
+        </div>
+
+        <textarea id="comment" name="problem" cols="70" rows="8" placeholder="Please tell us more about your experience with this document" data-asterisk="a2" required=""></textarea>
+        <sup id="a2" class="asterisk" aria-hidden="true">*</sup>
+
+        <input id="email" type="email" name="email" placeholder="Email (optional)" size="48">
+
+        <p class="fineprint">
+            <em aria-hidden="true"><span>*</span> Required information</em>
+        </p> 
+
+        <input id="submit" type="button" value="Send">
+
+        <section id="legal">
+            <p>
+                To submit a product bug or enhancement request, please visit the 
+                <a href="https://developer.apple.com/bugreporter/" target="_blank">Bug Reporter</a> 
+                page.
+            </p>
+            <p>
+                Please read <a href="http://www.apple.com/legal/policies/ideas.html" target="_blank">Apple's Unsolicited Idea Submission Policy</a> 
+                before you send us your feedback.
+            </p> 
+        </section>
+    </form>
+</div>
+
+    
+    <script charset="utf-8" src="./OS X ABI Dynamic Loader Reference_files/prototype.js"></script>
+    <script src="./OS X ABI Dynamic Loader Reference_files/library.js"></script>
+    <script src="./OS X ABI Dynamic Loader Reference_files/feedback.js"></script>
+
+<script type="text/javascript" src="./OS X ABI Dynamic Loader Reference_files/pagetracker.js"></script>
+<script type="text/javascript">
+if(typeof PageTracker !== 'undefined') {
+  if(window.addEventListener) {
+    window.addEventListener("load", function(){PageTracker.logPageLoad()},false);
+  } else if(window.attachEvent) {
+    window.attachEvent("onload",function(){PageTracker.logPageLoad()});
+  }
+}
+</script>
+
+<script id="hiddenlpsubmitdiv" style="display: none;"></script><script>try{for(var lastpass_iter=0; lastpass_iter < document.forms.length; lastpass_iter++){ var lastpass_f = document.forms[lastpass_iter]; if(typeof(lastpass_f.lpsubmitorig2)=="undefined"){ lastpass_f.lpsubmitorig2 = lastpass_f.submit; lastpass_f.submit = function(){ var form=this; var customEvent = document.createEvent("Event"); customEvent.initEvent("lpCustomEvent", true, true); var d = document.getElementById("hiddenlpsubmitdiv"); if (d) {for(var i = 0; i < document.forms.length; i++){ if(document.forms[i]==form){ d.innerText=i; } } d.dispatchEvent(customEvent); }form.lpsubmitorig2(); } } }}catch(e){}</script></body></html>

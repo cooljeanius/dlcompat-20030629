@@ -14,12 +14,32 @@
 # endif /* HAVE_ARCHITECTURE_PPC_MODE_INDEPENDENT_ASM_H || __APPLE__ */
 #endif /* __ppc__ || __ppc64__ */
 
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITY_H)
+# include <Availability.h>
+#else
+# warning "will not be able to do availability checks"
+#endif /* __APPLE__ || HAVE_AVAILABILITY_H */
+
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITYMACROS_H)
+# include <AvailabilityMacros.h>
+#else
+# warning "will not be able to do checks with availability macros"
+#endif /* __APPLE__ || HAVE_AVAILABILITYMACROS_H */
+
+#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+# if __MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#  define HAVE__DYLD_FUNC_LOOKUP 1
+# else
+#  undef HAVE__DYLD_FUNC_LOOKUP
+# endif /* Snow Leopard check */
+#endif /* __MAC_OS_X_VERSION_MIN_REQUIRED */
+
 #if defined(HAVE_MACH_O_DYLD_H) || __APPLE__
 # include <mach-o/dyld.h>
-#elif !defined(_dyld_func_lookup)
+#elif !defined(_dyld_func_lookup) && !defined(HAVE__DYLD_FUNC_LOOKUP)
 /* prototype */
 extern int _dyld_func_lookup(const char* dyld_func_name, void **address);
-#endif /* HAVE_MACH_O_DYLD_H || __APPLE__ */
+#endif /* (HAVE_MACH_O_DYLD_H || __APPLE__) || (!_dyld_func_lookup && !HAVE__DYLD_FUNC_LOOKUP) */
 
 #ifdef __GNUC__
 # define ASMCALL __asm__
@@ -42,13 +62,14 @@ extern int _dyld_func_lookup(const char* dyld_func_name, void **address);
 # endif /* __STRICT_ANSI__ */
 #endif /* !INLINECALL */
 
+#ifndef HAVE__DYLD_FUNC_LOOKUP
 INLINECALL int _dyld_func_lookup(const char* dyld_func_name, void **address)
 {
 	/* TODO: figure out how to get this function's parameters into the
 	 * assembly part */
-#if __GNUC__
+# if __GNUC__
 /* not sure if __volatile__ is needed or not? */
-# ifdef __i386__
+#  ifdef __i386__
 	__asm__ __volatile__ ("\n\t"
 	".data\n\t"
 	"\n\t"
@@ -58,9 +79,9 @@ INLINECALL int _dyld_func_lookup(const char* dyld_func_name, void **address)
 	"\n\t"
 	".text\n\t"
 	".align	4, 0x90\n\t");
-# endif /* __i386__ */
+#  endif /* __i386__ */
 
-# if __x86_64__
+#  if __x86_64__
 	__asm__ __volatile__ ("\n\t"
 	".data\n\t"
 	".align 3\n\t"
@@ -72,9 +93,9 @@ INLINECALL int _dyld_func_lookup(const char* dyld_func_name, void **address)
 	".text\n\t"
 	".align 2,0x90\n\t"
 			 "\n\t");
-# endif /* __x86_64__ */
+#  endif /* __x86_64__ */
 
-# if __ppc__ || __ppc64__
+#  if __ppc__ || __ppc64__
 	__asm__ __volatile__ ("\n\t"
 	"\n\t"
 	".data\n\t"
@@ -89,11 +110,16 @@ INLINECALL int _dyld_func_lookup(const char* dyld_func_name, void **address)
 	".text\n\t"
 	".align 2\n\t"
 			 "\n\t");
-# endif /* __ppc__ || __ppc64__ */
-#else
-# warning "only GCC-style inline assembly is recognized so far."
-#endif /* __GNUC__ */
+#  endif /* __ppc__ || __ppc64__ */
+# else
+#  warning "only GCC-style inline assembly is recognized so far."
+# endif /* __GNUC__ */
 	return 0;
 }
+#else
+# if __GNUC__ && !__STRICT_ANSI__ && !__STDC__
+#  warning "you should already have a working _dyld_func_lookup(); compiling this file should be unnecessary."
+# endif /* __GNUC__ && !__STRICT_ANSI__ && !__STDC__ */
+#endif /* !HAVE__DYLD_FUNC_LOOKUP */
 
 /* EOF */

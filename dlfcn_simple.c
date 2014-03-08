@@ -35,6 +35,18 @@
 # define DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD 1
 #endif /* HAVE_CONFIG_H */
 
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITY_H)
+# include <Availability.h>
+#else
+# warning "will not be able to do availability checks"
+#endif /* __APPLE__ || HAVE_AVAILABILITY_H */
+
+#if defined(__APPLE__) || defined(HAVE_AVAILABILITYMACROS_H)
+# include <AvailabilityMacros.h>
+#else
+# warning "will not be able to do checks with availability macros"
+#endif /* __APPLE__ || HAVE_AVAILABILITYMACROS_H */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,11 +177,30 @@ void *dlsymIntern(void *handle, const char *symbol)
 
 	/* If the handle is -1, if is the app global context */
 	if (handle == (void *)-1) {
-		/* Global context, use NSLookupAndBindSymbol */
+#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED || 1
+		/* The "|| 1" is there because even though this case is deprecated,
+		 * it was the original and the only one actually tested properly: */
+# if (__MAC_OS_X_VERSION_MIN_REQUIRED < 1040) || 1
+		/* Global context, use NSLookupAndBindSymbol (deprecated in 10.4+) */
+		/* (NSIsSymbolNameDefined is also deprecated in 10.4+) */
 		if (NSIsSymbolNameDefined(symbol)) {
 			nssym = (NSSymbol *)NSLookupAndBindSymbol(symbol);
 		}
-
+# elif (__MAC_OS_X_VERSION_MIN_REQUIRED < 1050)
+		/* not sure if this works as a 1-for-1 substitution of the above: */
+		if ((bool)NSLookupSymbolInImage(NULL,symbol,(uint32_t)NULL)) {
+			nssym = (NSSymbol *)NSLookupSymbolInImage(NULL,symbol,(uint32_t)NULL);
+		}
+# else
+#  if __GNUC__ && !__STRICT_ANSI__
+#   warning "no case for your OS implemented yet"
+#  endif /* __GNUC__ && !__STRICT_ANSI__ */
+# endif /* 10.3- || 10.4 */
+#else
+# if __GNUC__ && !__STRICT_ANSI__
+#  warning "cannot make assumptions based on your OS"
+# endif /* __GNUC__ && !__STRICT_ANSI__ */
+#endif /* __MAC_OS_X_VERSION_MIN_REQUIRED */
 	}
 	/* Now see if the handle is a struch mach_header* or not, use NSLookupSymbol
 	 * in image for libraries, and NSLookupSymbolInModule for bundles */

@@ -55,21 +55,21 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A54665CF18CA2BE90036819B /* dlcompat-dladdr-test */;
+			remoteGlobalIDString = A54665CF18CA2BE90036819B;
 			remoteInfo = "dlcompat-dladdr-test";
 		};
 		A546664418CA304F0036819B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A54665E018CA2C2D0036819B /* dlcompat-dlsymtest-test */;
+			remoteGlobalIDString = A54665E018CA2C2D0036819B;
 			remoteInfo = "dlcompat-dlsymtest-test";
 		};
 		A546664618CA304F0036819B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = A546630018C92DBC0036819B /* dlcompat-dltest-test */;
+			remoteGlobalIDString = A546630018C92DBC0036819B;
 			remoteInfo = "dlcompat-dltest-test";
 		};
 /* End PBXContainerItemProxy section */
@@ -567,7 +567,11 @@
 		1DEB914F08733D8E0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = (
+					i386,
+					x86_64,
+					ppc,
+				);
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DEBUGGING_SYMBOLS = full;
@@ -580,7 +584,6 @@
 					"DEBUG=2",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_GLOBAL_CONSTRUCTORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
@@ -605,6 +608,7 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GENERATE_PKGINFO_FILE = YES;
 				LD_GENERATE_MAP_FILE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
@@ -629,7 +633,6 @@
 					HAVE_CONFIG_H,
 					HAVE_DECL_STRERROR_R,
 				);
-				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;

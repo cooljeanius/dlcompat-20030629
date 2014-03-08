@@ -1,0 +1,32 @@
+example ifdef from <Availability.h>:
+
+        #ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+            // code only compiled when targeting Mac OS X and not iPhone
+            // note use of 1050 instead of __MAC_10_5
+            #if __MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+                // code in here might run on pre-Leopard OS
+            #else
+                // code here can assume Leopard or later
+            #endif
+        #endif
+
+functions with deprecation warnings when the deployment target is:
+
+- <= 10.3: None.
+- >= 10.4:
+	* NSIsSymbolNameDefined
+	* NSIsSymbolNameDefinedInImage
+	* NSLookupAndBindSymbol
+- >= 10.5:
+	* NSAddImage
+	* NSAddressOfSymbol
+	* NSCreateObjectFileImageFromFile
+	* NSDestroyObjectFileImage
+	* NSLinkEditError
+	* NSLinkModule
+	* NSLookupSymbolInImage
+	* NSLookupSymbolInModule
+	* NSNameOfModule
+	* NSUnLinkModule
+- >= 10.6:
+	* _dyld_func_lookup
