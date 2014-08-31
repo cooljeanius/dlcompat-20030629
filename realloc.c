@@ -19,20 +19,24 @@
 
 /* written by Jim Meyering and Bruno Haible */
 
-#define _GL_USE_STDLIB_ALLOC 1
+#ifndef _GL_USE_STDLIB_ALLOC
+# define _GL_USE_STDLIB_ALLOC 1
+#endif /* !_GL_USE_STDLIB_ALLOC */
 #include <config.h>
 
-/* Only the AC_FUNC_REALLOC macro defines 'realloc' already in config.h.  */
+/* Only the AC_FUNC_REALLOC macro defines 'realloc' already in config.h: */
 #ifdef realloc
 # define NEED_REALLOC_GNU 1
-/* Whereas the gnulib module 'realloc-gnu' defines HAVE_REALLOC_GNU.  */
-#elif GNULIB_REALLOC_GNU && !HAVE_REALLOC_GNU
-# define NEED_REALLOC_GNU 1
-#endif /* realloc || (GNULIB_REALLOC_GNU && !HAVE_REALLOC_GNU) */
+#else
+/* Whereas the gnulib module 'realloc-gnu' defines HAVE_REALLOC_GNU: */
+# if (defined(GNULIB_REALLOC_GNU) && GNULIB_REALLOC_GNU) && !HAVE_REALLOC_GNU
+#  define NEED_REALLOC_GNU 1
+# endif /* (GNULIB_REALLOC_GNU && !HAVE_REALLOC_GNU) */
+#endif /* realloc */
 
 /* Infer the properties of the system's malloc function.
- * The gnulib module 'malloc-gnu' defines HAVE_MALLOC_GNU. */
-#if GNULIB_MALLOC_GNU && HAVE_MALLOC_GNU
+ * The gnulib module 'malloc-gnu' should define HAVE_MALLOC_GNU for us: */
+#if (defined(GNULIB_MALLOC_GNU) && GNULIB_MALLOC_GNU) && HAVE_MALLOC_GNU
 # define SYSTEM_MALLOC_GLIBC_COMPATIBLE 1
 #endif /* GNULIB_MALLOC_GNU && HAVE_MALLOC_GNU */
 
@@ -45,37 +49,36 @@
  * use malloc. */
 
 #ifndef rpl_realloc
-/* prototype */
-void * rpl_realloc (void *p, size_t n);
+/* prototype: */
+void * rpl_realloc(void *p, size_t n);
 #endif /* !rpl_realloc */
 
-void *
-rpl_realloc (void *p, size_t n)
+void *rpl_realloc(void *p, size_t n)
 {
   void *result;
 
-#if NEED_REALLOC_GNU
+#if (defined(NEED_REALLOC_GNU) && NEED_REALLOC_GNU)
   if (n == 0) {
       n = 1;
 
-      /* In theory realloc might fail, so do NOT rely on it to free.  */
-      free (p);
+      /* In theory realloc might fail, so do NOT rely on it to free: */
+      free(p);
       p = NULL;
   }
 #endif /* NEED_REALLOC_GNU */
 
   if (p == NULL) {
-#if GNULIB_REALLOC_GNU && !NEED_REALLOC_GNU && !SYSTEM_MALLOC_GLIBC_COMPATIBLE
+#if (defined(GNULIB_REALLOC_GNU) && GNULIB_REALLOC_GNU) && !NEED_REALLOC_GNU && !SYSTEM_MALLOC_GLIBC_COMPATIBLE
       if (n == 0) {
 		  n = 1;
 	  }
 #endif /* GNULIB_REALLOC_GNU && !NEED_REALLOC_GNU && !SYSTEM_MALLOC_GLIBC_COMPATIBLE */
-      result = malloc (n);
+      result = malloc(n);
   } else {
-	  result = realloc (p, n);
+	  result = realloc(p, n);
   }
 
-#if !HAVE_REALLOC_POSIX
+#if !defined(HAVE_REALLOC_POSIX) || !HAVE_REALLOC_POSIX
   if (result == NULL) {
 	  errno = ENOMEM;
   }

@@ -28,30 +28,32 @@
 #ifdef HAVE_CONFIG_H
 # include "../config.h"
 #else
-# define DLMODULE_C_NON_AUTOHEADER_BUILD 1
+# ifndef DLMODULE_C_NON_AUTOHEADER_BUILD
+#  define DLMODULE_C_NON_AUTOHEADER_BUILD 1
+# endif /* !DLMODULE_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
 
-extern void _init (void);
-extern void _fini (void);
-extern void test (int number);
+extern void _init(void);
+extern void _fini(void);
+extern void test(int number);
 
 /* DL_MODULE_NUMBER needs to be defined with a compiler flag
  * (see the Makefile for examples) */
-void _init ()
+void _init(void)
 {
-  fprintf (stderr, "dlcompat: dl%s: _init()\n", DL_MODULE_NUMBER);
+  fprintf(stderr, "dlcompat: dl%s: _init()\n", DL_MODULE_NUMBER);
 }
 
-void _fini ()
+void _fini(void)
 {
-  fprintf (stderr, "dlcompat: dl%s: _fini()\n", DL_MODULE_NUMBER);
+  fprintf(stderr, "dlcompat: dl%s: _fini()\n", DL_MODULE_NUMBER);
 }
 
-void test (int number)
+void test(int number)
 {
-  fprintf (stderr, "dlcompat: dl%s: test(%d)\n", DL_MODULE_NUMBER, number);
+  fprintf(stderr, "dlcompat: dl%s: test(%d)\n", DL_MODULE_NUMBER, number);
 }
 
 /* EOF */

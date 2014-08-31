@@ -3,7 +3,9 @@
 #ifdef HAVE_CONFIG_H
 # include "../config.h"
 #else
-# define DLSYMTEST_C_NON_AUTOHEADER_BUILD 1
+# ifndef DLSYMTEST_C_NON_AUTOHEADER_BUILD
+#  define DLSYMTEST_C_NON_AUTOHEADER_BUILD 1
+# endif /* !DLSYMTEST_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
@@ -12,7 +14,7 @@
 
 /* taken from "../dlfcn.c": */
 #ifndef RTLD_SELF
-# define RTLD_SELF ((void *) -3)
+# define RTLD_SELF ((void *)-3)
 #endif /* !RTLD_SELF */
 
 int main(int argc, const char* argv[])

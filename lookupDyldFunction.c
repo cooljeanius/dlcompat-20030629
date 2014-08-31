@@ -5,7 +5,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #else
-# define LOOKUPDYLDFUNCTION_C_NON_AUTOHEADER_BUILD 1
+# ifndef LOOKUPDYLDFUNCTION_C_NON_AUTOHEADER_BUILD
+#  define LOOKUPDYLDFUNCTION_C_NON_AUTOHEADER_BUILD 1
+# endif /* !LOOKUPDYLDFUNCTION_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 #include <stdbool.h>
@@ -125,12 +127,12 @@ bool lookupDyldFunction(const char* name, uintptr_t* address)
 {
 	const dyld_func* p;
 
-	for (p = dyld_funcs; p->name != NULL; ++p) {
-	    if ( strcmp(p->name, name) == 0 ) {
+	for ((p = dyld_funcs); (p->name != NULL); ++p) {
+	    if (strcmp(p->name, name) == 0) {
 			/* not sure if I can use unimplemented() like this... should I put
 			 * quotes around it to make it a string? Or cast it? Or both?
 			 * (the current method silences warnings from clang, but NOT from GCC) */
-			if( p->implementation == (const char *)((const char *)unimplemented || "unimplemented")) {
+			if (p->implementation == (const char *)((const char *)unimplemented || "unimplemented")) {
 				printf("unimplemented dyld function: %s\n", p->name);
 			}
 			*address = (uintptr_t)p->implementation;

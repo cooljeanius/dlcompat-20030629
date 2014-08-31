@@ -77,14 +77,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 subdir = test
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/atlocal.in $(srcdir)/Makefile.orig.in
+	$(srcdir)/atlocal.in $(srcdir)/Makefile_orig.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = atlocal Makefile.orig
+CONFIG_CLEAN_FILES = atlocal Makefile_orig
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -220,10 +220,11 @@ DEBUG = 0
 DEBUGOPT = -g -O0
 WARN_CFLAGS = -Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit
 DEFINES = @DEBUGDEF@ @FINKDEF@
-EXTRA_DIST = atlocal.in
+EXTRA_DIST = atlocal.in dladdr.c dlmodule.c dlsymtest.c dltest.c \
+	libfoo.c
 AUTOM4TE = $(SHELL) $(top_srcdir)/build-aux/missing --run autom4te
 AUTOTEST = $(AUTOM4TE) --language=autotest
-DISTCLEANFILES = .DS_Store
+DISTCLEANFILES = .DS_Store Makefile*orig
 all: all-am
 
 .SUFFIXES:
@@ -259,7 +260,7 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 atlocal: $(top_builddir)/config.status $(srcdir)/atlocal.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-Makefile.orig: $(top_builddir)/config.status $(srcdir)/Makefile.orig.in
+Makefile_orig: $(top_builddir)/config.status $(srcdir)/Makefile_orig.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 tags TAGS:
 
@@ -299,6 +300,7 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-local
 check: check-am
 all-am: Makefile
 installdirs:
@@ -399,31 +401,31 @@ ps-am:
 
 uninstall-am:
 
-.MAKE: install-am install-strip
+.MAKE: check-am install-am install-strip
 
-.PHONY: all all-am check check-am clean clean-generic clean-local \
-	cscopelist-am ctags-am distclean distclean-generic distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installcheck-local installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am
+.PHONY: all all-am check check-am check-local clean clean-generic \
+	clean-local cscopelist-am ctags-am distclean distclean-generic \
+	distdir dvi dvi-am html html-am info info-am install \
+	install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installcheck-local \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags-am \
+	uninstall uninstall-am
 
 
 all: dlone.so dltwo.so dllib.dylib dllib.a dltest dladdr dlsymtest
 
 dlone.so: dlmodule.c
-	$(CC) $(CFLAGS) -bundle -o dlone.so dlmodule.c -DDL_MODULE_NUMBER=\"one\"
+	$(CC) $(CFLAGS) -bundle -o dlone.so $(srcdir)/dlmodule.c -DDL_MODULE_NUMBER=\"one\"
 
 dltwo.so: dlmodule.c
-	$(CC) $(CFLAGS) -bundle -o dltwo.so dlmodule.c -DDL_MODULE_NUMBER=\"two\"
+	$(CC) $(CFLAGS) -bundle -o dltwo.so $(srcdir)/dlmodule.c -DDL_MODULE_NUMBER=\"two\"
 
 dlmodule.o: dlmodule.c
-	$(CC) $(CFLAGS) -c -o dlmodule.o dlmodule.c -fno-common -DPIC -DDL_MODULE_NUMBER=\"lib\"
+	$(CC) $(CFLAGS) -c -o dlmodule.o $(srcdir)/dlmodule.c -fno-common -DPIC -DDL_MODULE_NUMBER=\"lib\"
 
 dllib.dylib: dlmodule.o
 	$(CC) $(CFLAGS) -dynamiclib -o dllib.dylib dlmodule.o
@@ -433,21 +435,21 @@ dllib.a: dlmodule.o
 	$(RANLIB) dllib.a
 
 dltest: dltest.c
-	$(CC) $(CFLAGS) -o dltest dltest.c -I.. -L.. -ldl
+	$(CC) $(CFLAGS) -o dltest $(srcdir)/dltest.c -I.. -L.. -ldl
 dladdr:	dladdr.c
-	$(CC) $(CFLAGS) -o dladdr dladdr.c -I.. -L.. -ldl
+	$(CC) $(CFLAGS) -fleading-underscore -o dladdr $(srcdir)/dladdr.c -I.. -L.. -ldl
 
 dlsymtest: dlsymtest.c libfoo.dylib
-	$(CC) $(CFLAGS) -o dlsymtest  dlsymtest.c -I.. -L.. -L. -ldl -lfoo
+	$(CC) $(CFLAGS) -o dlsymtest $(srcdir)/dlsymtest.c -I.. -L.. -L. -ldl -lfoo
 
 libfoo.o: libfoo.c
-	$(CC) $(CFLAGS) -c -o libfoo.o libfoo.c
+	$(CC) $(CFLAGS) -c -o libfoo.o $(srcdir)/libfoo.c
 
 libfoo.dylib: libfoo.o
 	$(CC) $(CFLAGS) -dynamiclib -o libfoo.dylib libfoo.o
 
 clean-local:		
-	rm -f *~ *.o *.so *.dylib *.a dltest dladdr dlsymtest
+	rm -fv *~ *.o *.so *.dylib *.a dltest dladdr dlsymtest
 	rm -rf *.dSYM || rmdir *.dSYM
 
 # use installcheck instead of check because it requires libdl to be
@@ -456,6 +458,9 @@ installcheck-local: atlocal dlone.so dltwo.so dllib.dylib dllib.a dltest dladdr 
 	test -e ./dladdr && ./dladdr 2>&1
 	test -e ./dltest && ./dltest
 	test -e ./dlsymtest && ./dlsymtest
+
+# so that we still have a check target, just have it depend on all:
+check-local: all
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

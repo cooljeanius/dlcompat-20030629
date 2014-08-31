@@ -42,7 +42,7 @@ DEBUG=0
 CC=@CC@
 OPT=@OPT@
 DEBUGOPT=-g -O0
-AM_CFLAGS=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit $(OPT)
+AM_CFLAGS=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit -Wno-multichar $(OPT)
 AM_CPPFLAGS=-I.
 AM_CXXFLAGS=-Wno-deprecated
 AR=@AR@
@@ -75,7 +75,7 @@ AM_DISTFILES= README \
 	test/Makefile test/dltest.c test/dlmodule.c test/dladdr.c
 		
 OBJS = dlfcn.o
-SIMPLE_OBJS = dlfcn_simple.c
+SIMPLE_OBJS = dlfcn_simple.o
 
 all: libdl.a libdl.dylib libdl_simple.dylib dlopen.3
 
@@ -85,12 +85,12 @@ regenerate_configure: configure.ac
 
 dist-local: $(DISTFILES)
 	tar -cvf dlcompat-$(VERSION).tar $(DISTFILES)
-	if test -d dlcompat-$(VERSION); then  rm -rf dlcompat-$(VERSION); fi;
+	if test -d dlcompat-$(VERSION); then rm -rfv dlcompat-$(VERSION); fi;
 	mkdir dlcompat-$(VERSION)
 	tar -C dlcompat-$(VERSION) -xvf dlcompat-$(VERSION).tar
 	rm dlcompat-$(VERSION).tar
 	tar -cvzf dlcompat-$(VERSION).tar.gz dlcompat-$(VERSION)
-	rm -rf dlcompat-$(VERSION)
+	rm -rfv dlcompat-$(VERSION)
 .PHONY: dist-local
 
 install-exec-local: install-dlcompat
@@ -100,15 +100,18 @@ install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/
-	ln -fs libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/libdl.dylib
+	$(LN_S) -fv libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/libdl.dylib
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(includedir)/
-	$(INSTALL) -m 644 dlfcn.h $(DESTDIR)/$(includedir)/
+	$(INSTALL) -m 644 $(srcdir)/dlfcn.h $(DESTDIR)/$(includedir)/
 .PHONY: install-dlcompat
 
-man_MANS = dlopen.3 dladdr.3
+dist_man_MANS = dladdr.3
+nodist_man_MANS = dlopen.3
 
-dlopen.3: dlopen.3.in
-	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < dlopen.3.in > dlopen.3
+EXTRA_DIST = dlopen.3.in
+
+dlopen.3: $(srcdir)/dlopen.3.in
+	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < $(srcdir)/dlopen.3.in > dlopen.3
 
 install-data-local: install-my-manpage
 .PHONY: install-data-local
@@ -116,22 +119,22 @@ install-data-local: install-my-manpage
 install-my-manpage: dlopen.3
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(mandir)/man3/
 	$(INSTALL) -m 644 dlopen.3 $(DESTDIR)/$(mandir)/man3/dlopen.3
-	$(INSTALL) -m 644 dladdr.3 $(DESTDIR)/$(mandir)/man3/dladdr.3	
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlsym.3
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlclose.3
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlerror.3
+	$(INSTALL) -m 644 $(srcdir)/dladdr.3 $(DESTDIR)/$(mandir)/man3/dladdr.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlsym.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlclose.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlerror.3
 
 lib_LIBRARIES = libdl.a libdl_simple.a
 libdl_a_SOURCES = dlfcn.c
 libdl_a_LIBADD = $(LIBOBJS)
-# I avoided adding the ALLOCA object, because the header that goes with the
-# source for it requires actually using gnulib properly...
+## I avoided adding the ALLOCA object, because the header that goes with
+## the source for it requires actually using gnulib properly...
 libdl_simple_a_SOURCES = dlfcn_simple.c
 libdl_simple_a_LIBADD = $(MY_DYLD_LIBOBJS)
 
-# avoid installing gnulib-provided headers:
+## avoid installing gnulib-provided headers:
 noinst_HEADERS = error.h progname.h
-# headers that actually came with this project can be installed:
+## headers that actually came with this project can be installed:
 include_HEADERS = dlfcn.h
 
 manually_build_libdl.a: $(OBJS) $(LIBOBJS)
@@ -143,10 +146,10 @@ manually_build_libdl.a: $(OBJS) $(LIBOBJS)
 # dynamic library targets, as by that point you might as well already have
 # full dynamic linking capabilities, which would be self-defeating...
 libdl.dylib: libdl.$(LIBVER).dylib
-	$(LN_S) -f libdl.$(LIBVER).dylib $@
+	$(LN_S) -fv libdl.$(LIBVER).dylib $@
 
 libdl_simple.dylib: libdl_simple.$(LIBVER).dylib
-	$(LN_S) -f libdl_simple.$(LIBVER).dylib $@
+	$(LN_S) -fv libdl_simple.$(LIBVER).dylib $@
 
 libdl.$(LIBVER).dylib: $(OBJS) $(LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(OBJS) $(LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
@@ -155,11 +158,11 @@ libdl_simple.$(LIBVER).dylib: $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
 
 clean-local:
-	rm -f $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
+	rm -fv $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
 .PHONY: clean-local
 
-DISTCLEANFILES = *~ .DS_Store
+DISTCLEANFILES = *~ .DS_Store Makefile*orig
 
 distclean-local: clean-local
-	rm -rf autom4te.cache || rmdir autom4te.cache
+	rm -rfv autom4te.cache || rmdir autom4te.cache
 .PHONY: distclean-local

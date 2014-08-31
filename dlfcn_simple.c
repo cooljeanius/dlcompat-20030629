@@ -22,29 +22,36 @@
  */
 
 
-/* Just to prove that it is NOT that hard to add Mac calls to your code :)
- * This works with pretty much everything, including kde3 xemacs and the gimp.
- * I would guess that it would work in at least 95% of cases, so use this as
- * your starting point, rather than the mess that is dlfcn.c, assuming that your
- * code does not require ref counting or symbol lookups in dependent libraries.
+/* Just to prove that it is NOT that hard to add Mac calls to your code :-)
+ * This works w/pretty much everything, including kde3, xemacs & the GIMP.
+ * I would guess that it would work in at least 95% of cases, so use this
+ * as your starting point, rather than the mess that is dlfcn.c,
+ * assuming that your code does not require ref counting or symbol lookups
+ * in dependent libraries.
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #else
-# define DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD 1
+# ifndef DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD
+#  define DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD 1
+# endif /* !DLFCN_SIMPLE_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 #if defined(__APPLE__) || defined(HAVE_AVAILABILITY_H)
 # include <Availability.h>
 #else
-# warning "will not be able to do availability checks"
+# if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+#  warning "will not be able to do availability checks"
+# endif /* __GNUC__ && !__STRICT_ANSI__ */
 #endif /* __APPLE__ || HAVE_AVAILABILITY_H */
 
 #if defined(__APPLE__) || defined(HAVE_AVAILABILITYMACROS_H)
 # include <AvailabilityMacros.h>
 #else
-# warning "will not be able to do checks with availability macros"
+# if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+#  warning "will not be able to do checks with availability macros"
+# endif /* __GNUC__ && !__STRICT_ANSI__ */
 #endif /* __APPLE__ || HAVE_AVAILABILITYMACROS_H */
 
 #include <stdio.h>
@@ -79,15 +86,15 @@ static const char *error(int setget, const char *str, ...)
 
 	if (setget <= 0) {
 		va_start(arg, str);
-		strncpy(errstr, "dlsimple: ", ERR_STR_LEN);
-		vsnprintf(errstr + 10, ERR_STR_LEN - 10, str, arg);
+		strncpy(errstr, "dlsimple: ", (size_t)ERR_STR_LEN);
+		vsnprintf((errstr + 10), (size_t)(ERR_STR_LEN - 10), str, arg);
 		va_end(arg);
-	/* We prefer to use the dyld error string if getset is 1*/
+	/* We prefer to use the dyld error string if getset is 1: */
 		if (setget == 0) {
 			NSLinkEditError(&ler, &lerno, &file, &dylderrstr);
 			fprintf(stderr,"dyld: %s\n",dylderrstr);
 			if (dylderrstr && strlen(dylderrstr)) {
-				strncpy(errstr,dylderrstr,ERR_STR_LEN);
+				strncpy(errstr, dylderrstr, (size_t)ERR_STR_LEN);
 			}
 		}
 		err_filled = 1;
@@ -114,10 +121,10 @@ void *dlopen(const char *path, int mode)
 
 	module = 0;
 	ofi = 0;
-	flags = NSLINKMODULE_OPTION_RETURN_ON_ERROR | NSLINKMODULE_OPTION_PRIVATE;
+	flags = (NSLINKMODULE_OPTION_RETURN_ON_ERROR | NSLINKMODULE_OPTION_PRIVATE);
 
-	/* If we got no path, the app wants the global namespace, use -1 as the marker
-	 * in this case */
+	/* If we got no path, the app wants the global namespace, use -1 as the
+     * marker in this case: */
 	if (!path) {
 		return (void *)-1;
 	}
@@ -129,15 +136,15 @@ void *dlopen(const char *path, int mode)
 			/* It was okay, so use NSLinkModule to link in the image */
 			if (!(mode & RTLD_LAZY)) flags += NSLINKMODULE_OPTION_BINDNOW;
 			module = NSLinkModule(ofi, path,flags);
-			/* Do NOT forget to destroy the object file image, unless you like
-			 * leaks */
+			/* Do NOT forget to destroy the object file image,
+             * unless you like leaks: */
 			NSDestroyObjectFileImage(ofi);
 			/* If the mode was global, then change the module; this avoids
-			 * multiply defined symbol errors to first load private then make
+			 * multiply defined symbol errors to 1st load private then make
 			 * global. Silly, is it not? */
 			if ((mode & RTLD_GLOBAL)) {
 			  if (!make_private_module_public) {
-				  /* see the note in dlfcn.c about casting the paramaters of
+				  /* see the note in dlfcn.c about casting the params of
 				   * _dyld_func_lookup(): */
 				   _dyld_func_lookup("__dyld_NSMakePrivateModulePublic",
 				   (void**)(unsigned long *)&make_private_module_public);
@@ -146,7 +153,8 @@ void *dlopen(const char *path, int mode)
 			}
 			break;
 		case NSObjectFileImageInappropriateFile:
-			/* It may have been a dynamic library rather than a bundle, try to load it */
+			/* It may have been a dynamic library rather than a bundle,
+             * try to load it: */
 			module = (void *)NSAddImage(path, NSADDIMAGE_OPTION_RETURN_ON_ERROR);
 			break;
 		case NSObjectFileImageFailure:
@@ -177,9 +185,9 @@ void *dlsymIntern(void *handle, const char *symbol)
 
 	/* If the handle is -1, if is the app global context */
 	if (handle == (void *)-1) {
-#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED || 1
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || 1
 		/* The "|| 1" is there because even though this case is deprecated,
-		 * it was the original and the only one actually tested properly: */
+		 * it was the original and the only 1 actually tested properly: */
 # if (__MAC_OS_X_VERSION_MIN_REQUIRED < 1040) || 1
 		/* Global context, use NSLookupAndBindSymbol (deprecated in 10.4+) */
 		/* (NSIsSymbolNameDefined is also deprecated in 10.4+) */
@@ -188,8 +196,9 @@ void *dlsymIntern(void *handle, const char *symbol)
 		}
 # elif (__MAC_OS_X_VERSION_MIN_REQUIRED < 1050)
 		/* not sure if this works as a 1-for-1 substitution of the above: */
-		if ((bool)NSLookupSymbolInImage(NULL,symbol,(uint32_t)NULL)) {
-			nssym = (NSSymbol *)NSLookupSymbolInImage(NULL,symbol,(uint32_t)NULL);
+		if ((bool)NSLookupSymbolInImage(NULL, symbol, (uint32_t)NULL)) {
+			nssym = (NSSymbol *)NSLookupSymbolInImage(NULL, symbol,
+                                                      (uint32_t)NULL);
 		}
 # else
 #  if __GNUC__ && !__STRICT_ANSI__
@@ -210,8 +219,8 @@ void *dlsymIntern(void *handle, const char *symbol)
 			(((struct mach_header *)handle)->magic == MH_CIGAM)) {
 			if (NSIsSymbolNameDefinedInImage((struct mach_header *)handle, symbol)) {
 				nssym = (NSSymbol *)NSLookupSymbolInImage((struct mach_header *)handle, symbol,
-														  NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
-														  | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR);
+														  (NSLOOKUPSYMBOLINIMAGE_OPTION_BIND
+                                                           | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR));
 			}
 
 		} else {
@@ -258,10 +267,10 @@ void *dlsym(void *handle, const char *symbol)
 	malloc_sym = NULL;
 
 	if (sym_len < 256) {
-		snprintf(undersym, 256, "_%s", symbol);
+		snprintf(undersym, 256UL, "_%s", symbol);
 		value = dlsymIntern(handle, undersym);
 	} else {
-		malloc_sym = malloc(sym_len + 2);
+		malloc_sym = (char *)malloc((size_t)(sym_len + 2UL));
 		if (malloc_sym) {
 			sprintf(malloc_sym, "_%s", symbol);
 			value = dlsymIntern(handle, malloc_sym);

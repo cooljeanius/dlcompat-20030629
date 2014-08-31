@@ -18,16 +18,20 @@
 
 /* written by Jim Meyering and Bruno Haible */
 
-#define _GL_USE_STDLIB_ALLOC 1
+#ifndef _GL_USE_STDLIB_ALLOC
+# define _GL_USE_STDLIB_ALLOC 1
+#endif /* !_GL_USE_STDLIB_ALLOC */
 #include <config.h>
-/* Only the AC_FUNC_MALLOC macro defines 'malloc' already in config.h.  */
+/* Only the AC_FUNC_MALLOC macro defines 'malloc' already in config.h: */
 #ifdef malloc
 # define NEED_MALLOC_GNU 1
 # undef malloc
-/* Whereas the gnulib module 'malloc-gnu' defines HAVE_MALLOC_GNU.  */
-#elif GNULIB_MALLOC_GNU && !HAVE_MALLOC_GNU
-# define NEED_MALLOC_GNU 1
-#endif /* malloc || (GNULIB_MALLOC_GNU && !HAVE_MALLOC_GNU) */
+#else
+/* Whereas the gnulib module 'malloc-gnu' defines HAVE_MALLOC_GNU: */
+# if (defined(GNULIB_MALLOC_GNU) && GNULIB_MALLOC_GNU) && !HAVE_MALLOC_GNU
+#  define NEED_MALLOC_GNU 1
+# endif /* (GNULIB_MALLOC_GNU && !HAVE_MALLOC_GNU) */
+#endif /* malloc */
 
 #include <stdlib.h>
 
@@ -41,24 +45,23 @@
 void * rpl_malloc (size_t n);
 #endif /* !rpl_malloc */
 
-void *
-rpl_malloc (size_t n)
+void * rpl_malloc(size_t n)
 {
 	void *result;
 
-#if NEED_MALLOC_GNU
+#if (defined(NEED_MALLOC_GNU) && NEED_MALLOC_GNU)
 	if (n == 0) {
 		n = 1;
 	}
 #endif /* NEED_MALLOC_GNU */
 
-	result = malloc (n);
+	result = malloc(n);
 
-#if !HAVE_MALLOC_POSIX
+#if !defined(HAVE_MALLOC_POSIX) || !HAVE_MALLOC_POSIX
 	if (result == NULL) {
 		errno = ENOMEM;
 	}
-#endif
+#endif /* !HAVE_MALLOC_POSIX */
 
 	return result;
 }

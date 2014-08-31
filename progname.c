@@ -39,9 +39,8 @@ const char *program_name = NULL;
 
 /* Set program_name, based on argv[0].
  * argv0 must be a string allocated with indefinite extent, and must not be
- * modified after this call.  */
-void
-set_program_name (const char *argv0)
+ * modified after this call: */
+void set_program_name(const char *argv0)
 {
   /* libtool creates a temporary executable whose name is sometimes prefixed
    * with "lt-" (depends on the platform). It also makes argv[0] absolute.
@@ -54,22 +53,22 @@ set_program_name (const char *argv0)
   /* Sanity check.  POSIX requires the invoking process to pass a non-NULL
    * argv[0].  */
   if (argv0 == NULL) {
-      /* It is a bug in the invoking program. Help diagnosing it.  */
-      fputs ("A NULL argv[0] was passed through an exec system call.\n",
+      /* It is a bug in the invoking program. Help diagnosing it: */
+      fputs("A NULL argv[0] was passed through an exec system call.\n",
              stderr);
-      abort ();
+      abort();
   }
 
-  slash = strrchr (argv0, '/');
-  base = (slash != NULL ? slash + 1 : argv0);
-  if (base - argv0 >= 7 && strncmp (base - 7, "/.libs/", 7) == 0) {
+  slash = strrchr(argv0, '/');
+  base = ((slash != NULL) ? (slash + 1) : argv0);
+  if (((base - argv0) >= 7) && (strncmp(base - 7, "/.libs/", 7UL) == 0)) {
       argv0 = base;
-      if (strncmp (base, "lt-", 3) == 0) {
-          argv0 = base + 3;
+      if (strncmp(base, "lt-", 3UL) == 0) {
+          argv0 = (base + 3);
           /* On glibc systems, remove the "lt-" prefix from the variable
            * program_invocation_short_name.  */
-#if HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
-          program_invocation_short_name = (char *) argv0;
+#if (defined(HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME) && HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME)
+          program_invocation_short_name = (char *)argv0;
 #endif /* HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME */
         }
     }
@@ -86,10 +85,10 @@ set_program_name (const char *argv0)
   program_name = argv0;
 
   /* On glibc systems, the error() function comes from libc and uses the
-   * variable program_invocation_name, not program_name.  So set this variable
+   * variable program_invocation_name, not program_name. So set this var
    * as well.  */
-#if HAVE_DECL_PROGRAM_INVOCATION_NAME
-  program_invocation_name = (char *) argv0;
+#if (defined(HAVE_DECL_PROGRAM_INVOCATION_NAME) && HAVE_DECL_PROGRAM_INVOCATION_NAME)
+  program_invocation_name = (char *)argv0;
 #endif /* HAVE_DECL_PROGRAM_INVOCATION_NAME */
 }
 

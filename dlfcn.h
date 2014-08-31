@@ -35,7 +35,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined (__GNUC__) && __GNUC__ > 3
+#if defined(__GNUC__) && (__GNUC__ > 3)
 # define dl_restrict __restrict
 #else
 # define dl_restrict
@@ -73,7 +73,7 @@ typedef	void (*dlfunc_t)(struct __dlfunc_arg);
 #endif /* !dlfunc_t && !HAVE_DLFUNC_T */
 
 /* make the ifdefs for the prototype match those for the function itself: */
-#if 0 || ((__FreeBSD__ || __APPLE__) && (defined(HAVE_DLFUNC_T) || defined(dlfunc_t)))
+#if 0 || (((defined(__FreeBSD__) && __FreeBSD__) || __APPLE__) && (defined(HAVE_DLFUNC_T) || defined(dlfunc_t)))
 extern dlfunc_t dlfunc(void * dl_restrict handle, const char * dl_restrict symbol);
 #endif /* 0 || ((__FreeBSD__ || __APPLE__) && (defined(HAVE_DLFUNC_T) || defined(dlfunc_t))) */
 

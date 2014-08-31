@@ -37,7 +37,7 @@ extern const char *program_name;
  * modified after this call.  */
 extern void set_program_name (const char *argv0);
 
-#if ENABLE_RELOCATABLE
+#if (defined(ENABLE_RELOCATABLE) && ENABLE_RELOCATABLE)
 
 /* Set program_name, based on argv[0], and original installation prefix and
  * directory, for relocatability.  */

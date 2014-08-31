@@ -3,7 +3,9 @@
 #ifdef HAVE_CONFIG_H
 # include "../config.h"
 #else
-# define LIBFOO_C_NON_AUTOHEADER_BUILD 1
+# ifndef LIBFOO_C_NON_AUTOHEADER_BUILD
+#  define LIBFOO_C_NON_AUTOHEADER_BUILD 1
+# endif /* !LIBFOO_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 /* not sure what was originally supposed to go in here, so just put a dummy

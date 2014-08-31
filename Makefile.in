@@ -111,11 +111,11 @@ subdir = .
 DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog THANKS \
 	$(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in $(srcdir)/Makefile.orig.in error.c \
+	$(srcdir)/config.h.in $(srcdir)/Makefile_orig.in error.c \
 	progname.c realloc.c error.h malloc.c lookupDyldFunction.c \
 	_dyld_func_lookup.c $(top_srcdir)/build-aux/depcomp \
-	$(include_HEADERS) $(noinst_HEADERS) COPYING TODO \
-	build-aux/ar-lib build-aux/compile build-aux/depcomp \
+	$(dist_man_MANS) $(include_HEADERS) $(noinst_HEADERS) COPYING \
+	TODO build-aux/ar-lib build-aux/compile build-aux/depcomp \
 	build-aux/install-sh build-aux/missing \
 	$(top_srcdir)/build-aux/ar-lib $(top_srcdir)/build-aux/compile \
 	$(top_srcdir)/build-aux/install-sh \
@@ -128,7 +128,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = Makefile.orig
+CONFIG_CLEAN_FILES = Makefile_orig
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -218,7 +218,7 @@ am__can_run_installinfo = \
   esac
 man3dir = $(mandir)/man3
 NROFF = nroff
-MANS = $(man_MANS)
+MANS = $(dist_man_MANS) $(nodist_man_MANS)
 HEADERS = $(include_HEADERS) $(noinst_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
@@ -405,7 +405,7 @@ ACLOCAL_AMFLAGS = -I m4 --install
 SUBDIRS = test
 DEBUG = 0
 DEBUGOPT = -g -O0
-AM_CFLAGS = -Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit $(OPT)
+AM_CFLAGS = -Wall -Wstrict-prototypes -Wmissing-prototypes -Wimplicit -Wno-multichar $(OPT)
 AM_CPPFLAGS = -I.
 AM_CXXFLAGS = -Wno-deprecated
 ARFLAGS = cru
@@ -427,21 +427,18 @@ AM_DISTFILES = README \
 	test/Makefile test/dltest.c test/dlmodule.c test/dladdr.c
 
 OBJS = dlfcn.o
-SIMPLE_OBJS = dlfcn_simple.c
-man_MANS = dlopen.3 dladdr.3
+SIMPLE_OBJS = dlfcn_simple.o
+dist_man_MANS = dladdr.3
+nodist_man_MANS = dlopen.3
+EXTRA_DIST = dlopen.3.in
 lib_LIBRARIES = libdl.a libdl_simple.a
 libdl_a_SOURCES = dlfcn.c
 libdl_a_LIBADD = $(LIBOBJS)
-# I avoided adding the ALLOCA object, because the header that goes with the
-# source for it requires actually using gnulib properly...
 libdl_simple_a_SOURCES = dlfcn_simple.c
 libdl_simple_a_LIBADD = $(MY_DYLD_LIBOBJS)
-
-# avoid installing gnulib-provided headers:
 noinst_HEADERS = error.h progname.h
-# headers that actually came with this project can be installed:
 include_HEADERS = dlfcn.h
-DISTCLEANFILES = *~ .DS_Store
+DISTCLEANFILES = *~ .DS_Store Makefile*orig
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -496,7 +493,7 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-Makefile.orig: $(top_builddir)/config.status $(srcdir)/Makefile.orig.in
+Makefile_orig: $(top_builddir)/config.status $(srcdir)/Makefile_orig.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-libLIBRARIES: $(lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
@@ -568,10 +565,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-install-man3: $(man_MANS)
+install-man3: $(dist_man_MANS) $(nodist_man_MANS)
 	@$(NORMAL_INSTALL)
 	@list1=''; \
-	list2='$(man_MANS)'; \
+	list2='$(dist_man_MANS) $(nodist_man_MANS)'; \
 	test -n "$(man3dir)" \
 	  && test -n "`echo $$list1$$list2`" \
 	  || exit 0; \
@@ -606,7 +603,7 @@ uninstall-man3:
 	@$(NORMAL_UNINSTALL)
 	@list=''; test -n "$(man3dir)" || exit 0; \
 	files=`{ for i in $$list; do echo "$$i"; done; \
-	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	l2='$(dist_man_MANS) $(nodist_man_MANS)'; for i in $$l2; do echo "$$i"; done | \
 	  sed -n '/\.3[a-z]*$$/p'; \
 	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^3][0-9a-z]*$$,3,;x' \
 	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
@@ -1079,12 +1076,12 @@ regenerate_configure: configure.ac
 
 dist-local: $(DISTFILES)
 	tar -cvf dlcompat-$(VERSION).tar $(DISTFILES)
-	if test -d dlcompat-$(VERSION); then  rm -rf dlcompat-$(VERSION); fi;
+	if test -d dlcompat-$(VERSION); then rm -rfv dlcompat-$(VERSION); fi;
 	mkdir dlcompat-$(VERSION)
 	tar -C dlcompat-$(VERSION) -xvf dlcompat-$(VERSION).tar
 	rm dlcompat-$(VERSION).tar
 	tar -cvzf dlcompat-$(VERSION).tar.gz dlcompat-$(VERSION)
-	rm -rf dlcompat-$(VERSION)
+	rm -rfv dlcompat-$(VERSION)
 .PHONY: dist-local
 
 install-exec-local: install-dlcompat
@@ -1094,13 +1091,13 @@ install-dlcompat: all install-my-manpage
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.a $(DESTDIR)/$(libdir)/
 	$(INSTALL) -m 644 libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/
-	ln -fs libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/libdl.dylib
+	$(LN_S) -fv libdl.$(LIBVER).dylib $(DESTDIR)/$(libdir)/libdl.dylib
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(includedir)/
-	$(INSTALL) -m 644 dlfcn.h $(DESTDIR)/$(includedir)/
+	$(INSTALL) -m 644 $(srcdir)/dlfcn.h $(DESTDIR)/$(includedir)/
 .PHONY: install-dlcompat
 
-dlopen.3: dlopen.3.in
-	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < dlopen.3.in > dlopen.3
+dlopen.3: $(srcdir)/dlopen.3.in
+	$(SED) -e "s/%%NOTPREPEND%%/$(NOTPREPEND)/" < $(srcdir)/dlopen.3.in > dlopen.3
 
 install-data-local: install-my-manpage
 .PHONY: install-data-local
@@ -1108,10 +1105,10 @@ install-data-local: install-my-manpage
 install-my-manpage: dlopen.3
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(mandir)/man3/
 	$(INSTALL) -m 644 dlopen.3 $(DESTDIR)/$(mandir)/man3/dlopen.3
-	$(INSTALL) -m 644 dladdr.3 $(DESTDIR)/$(mandir)/man3/dladdr.3	
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlsym.3
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlclose.3
-	ln -fs dlopen.3 $(DESTDIR)/$(mandir)/man3/dlerror.3
+	$(INSTALL) -m 644 $(srcdir)/dladdr.3 $(DESTDIR)/$(mandir)/man3/dladdr.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlsym.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlclose.3
+	$(LN_S) -fv dlopen.3 $(DESTDIR)/$(mandir)/man3/dlerror.3
 
 manually_build_libdl.a: $(OBJS) $(LIBOBJS)
 	$(AR) $(ARFLAGS) libdl.a $(OBJS) $(LIBOBJS)
@@ -1122,10 +1119,10 @@ manually_build_libdl.a: $(OBJS) $(LIBOBJS)
 # dynamic library targets, as by that point you might as well already have
 # full dynamic linking capabilities, which would be self-defeating...
 libdl.dylib: libdl.$(LIBVER).dylib
-	$(LN_S) -f libdl.$(LIBVER).dylib $@
+	$(LN_S) -fv libdl.$(LIBVER).dylib $@
 
 libdl_simple.dylib: libdl_simple.$(LIBVER).dylib
-	$(LN_S) -f libdl_simple.$(LIBVER).dylib $@
+	$(LN_S) -fv libdl_simple.$(LIBVER).dylib $@
 
 libdl.$(LIBVER).dylib: $(OBJS) $(LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(OBJS) $(LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
@@ -1134,11 +1131,11 @@ libdl_simple.$(LIBVER).dylib: $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS)
 	$(CC) -dynamiclib -o $@ $(SIMPLE_OBJS) $(MY_DYLD_LIBOBJS) -install_name $(prefix)/lib/$@ $(VERSTRING)
 
 clean-local:
-	rm -f $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
+	rm -fv $(OBJS) libdl.* libdl_simple.* *~ *.o *.dylib dlopen.3
 .PHONY: clean-local
 
 distclean-local: clean-local
-	rm -rf autom4te.cache || rmdir autom4te.cache
+	rm -rfv autom4te.cache || rmdir autom4te.cache
 .PHONY: distclean-local
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

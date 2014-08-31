@@ -28,24 +28,28 @@
 #ifdef HAVE_CONFIG_H
 # include "../config.h"
 #else
-# define DLTEST_C_NON_AUTOHEADER_BUILD 1
+# ifndef DLTEST_C_NON_AUTOHEADER_BUILD
+#  define DLTEST_C_NON_AUTOHEADER_BUILD 1
+# endif /* !DLTEST_C_NON_AUTOHEADER_BUILD */
 #endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
 #include <string.h>
-#define __BSD_VISIBLE 1
+#ifndef __BSD_VISIBLE
+# define __BSD_VISIBLE 1
+#endif /* !__BSD_VISIBLE */
 #include "dlfcn.h"
 
-#define FLAGS (RTLD_NOW|RTLD_GLOBAL)
+#define FLAGS (RTLD_NOW | RTLD_GLOBAL)
 
-typedef void (*dlModuleTestFn) (int number);
+typedef void (*dlModuleTestFn)(int number);
 
-extern int test_one (void);
-extern int test_two (void);
-extern int test_three (void);
-extern void * try_open (const char * f1, const char * f2, const char * f3);
+extern int test_one(void);
+extern int test_two(void);
+extern int test_three(void);
+extern void * try_open(const char * f1, const char * f2, const char * f3);
 
-int test_one ()
+int test_one(void)
 {
   dlModuleTestFn test;
   void * handle[4] = { 0, 0, 0, 0 };
@@ -62,7 +66,8 @@ int test_one ()
 
   handle[0] = dlopen("dlone.so", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -75,7 +80,8 @@ int test_one ()
 
   handle[0] = dlopen("dltwo.so", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -94,7 +100,8 @@ int test_one ()
 
   handle[0] = dlopen("dlone.so", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -107,7 +114,8 @@ int test_one ()
 
   handle[0] = dlopen("dltwo.so", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -124,10 +132,11 @@ int test_one ()
   fprintf(stderr, "Test #3: multi-open\n");
   fprintf(stderr, "===================\n");
 
-  for (i = 0; i < 4; i++) {
+  for ((i = 0); (i < 4); i++) {
       handle[i] = dlopen("dlone.so", FLAGS);
       if (handle[i] == 0) {
-		  fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n", dlerror ());
+		  fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n",
+                  dlerror());
 		  return 1;
 	  }
       test = (dlModuleTestFn)dlsym(handle[i], "test");
@@ -139,17 +148,19 @@ int test_one ()
 
       handle2[i] = dlopen("dltwo.so", FLAGS);
       if (handle[i] == 0) {
-		  fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n", dlerror ());
+		  fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n",
+                  dlerror());
 		  return 1;
 	  }
       test = (dlModuleTestFn)dlsym(handle2[i], "test");
       if (test == 0) {
-		  fprintf(stderr, "dlsym(handle2[i],\"test\"): symbol not found\n");
+		  fprintf(stderr,
+                  "dlsym(handle2[i],\"test\"): symbol not found\n");
 		  return 1;
 	  }
       test(i);
   }
-  for (i = 0; i < 4; i++) {
+  for ((i = 0); (i < 4); i++) {
       dlclose(handle[i]);
       dlclose(handle2[i]);
   }
@@ -163,7 +174,8 @@ int test_one ()
   for (i = 0; i < 4; i++) {
       handle[i] = dlopen("dllib.dylib", FLAGS);
       if (handle[i] == 0) {
-		  fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+		  fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+                  dlerror());
 		  return 1;
 	  }
       test = (dlModuleTestFn)dlsym(handle[i], "test");
@@ -173,7 +185,7 @@ int test_one ()
 	  }
       test(i);
   }
-  for (i = 0; i < 4; i++) {
+  for ((i = 0); (i < 4); i++) {
       dlclose(handle[i]);
   }
 
@@ -185,7 +197,8 @@ int test_one ()
 
   handle[0] = dlopen("dllib.dylib", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -201,7 +214,7 @@ int test_one ()
   return 0;
 }
 
-int test_two ()
+int test_two(void)
 {
   dlModuleTestFn test;
   void * handle[4] = { 0, 0, 0, 0 };
@@ -216,7 +229,8 @@ int test_two ()
 
   handle[0] = dlopen("dllib.dylib", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn) dlsym (handle[0], "test");
@@ -234,10 +248,11 @@ int test_two ()
 
   handle[1] = dlopen("dlone.so", FLAGS);
   if (handle[1] == 0) {
-      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
-  test = (dlModuleTestFn) dlsym (handle[1], "test");
+  test = (dlModuleTestFn)dlsym(handle[1], "test");
   if (test == 0)	{
       fprintf(stderr, "dlsym(handle[1],\"test\"): symbol not found\n");
       return 1;
@@ -259,7 +274,8 @@ int test_two ()
 
   handle[0] = dlopen("dllib.dylib", FLAGS);
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[0], "test");
@@ -277,7 +293,8 @@ int test_two ()
 
   handle[1] = dlopen("dltwo.so", FLAGS);
   if (handle[1] == 0) {
-      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[1], "test");
@@ -299,7 +316,7 @@ int test_two ()
   return 0;
 }
 
-void * try_open (const char * f1, const char * f2, const char * f3)
+void * try_open(const char * f1, const char * f2, const char * f3)
 {
   void * handle;
 
@@ -307,13 +324,13 @@ void * try_open (const char * f1, const char * f2, const char * f3)
 
   fprintf(stderr, "- loading `%s'... ", f1);
   if ((handle = dlopen(f1, FLAGS)) == 0) {
-      fprintf(stderr, "%s\n", dlerror ());
+      fprintf(stderr, "%s\n", dlerror());
       fprintf(stderr, "- loading `%s'...\n", f2);
       if ((handle = dlopen(f2, FLAGS)) == 0) {
-		  fprintf(stderr, "%s\n", dlerror ());
+		  fprintf(stderr, "%s\n", dlerror());
 		  fprintf(stderr, "- loading `%s'...\n", f3);
 		  if ((handle = dlopen(f3, FLAGS)) == 0) {
-			  fprintf(stderr, "%s\n", dlerror ());
+			  fprintf(stderr, "%s\n", dlerror());
 		  }
 	  }
   }
@@ -322,7 +339,7 @@ void * try_open (const char * f1, const char * f2, const char * f3)
   return handle;
 }
 
-int test_three ()
+int test_three(void)
 {
   dlModuleTestFn test;
   void * handle[4] = { 0, 0, 0, 0 };
@@ -335,12 +352,13 @@ int test_three ()
   fprintf(stderr, "Test #3.1: open dylib\n");
   fprintf(stderr, "=====================\n");
 
-  handle[0] = try_open ("dllib.a", "libs/dllib.dylib", "dllib.dylib");
+  handle[0] = try_open("dllib.a", "libs/dllib.dylib", "dllib.dylib");
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
-  test = (dlModuleTestFn) dlsym (handle[0], "test");
+  test = (dlModuleTestFn)dlsym(handle[0], "test");
   if (test == 0) {
       fprintf(stderr, "dlsym(handle[0],\"test\"): symbol not found\n");
       return 1;
@@ -353,12 +371,13 @@ int test_three ()
   fprintf(stderr, "Test #3.2: open module\n");
   fprintf(stderr, "======================\n");
 
-  handle[1] = try_open ("dlone.a", "libs/dlone.so", "dlone.so");
+  handle[1] = try_open("dlone.a", "libs/dlone.so", "dlone.so");
   if (handle[1] == 0) {
-      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dlone.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
-  test = (dlModuleTestFn) dlsym (handle[1], "test");
+  test = (dlModuleTestFn)dlsym(handle[1], "test");
   if (test == 0) {
       fprintf(stderr, "dlsym(handle[1],\"test\"): symbol not found\n");
       return 1;
@@ -380,10 +399,11 @@ int test_three ()
 
   handle[0] = try_open ("dllib.a", "libs/dllib.dylib", "dllib.dylib");
   if (handle[0] == 0) {
-      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dllib.dylib\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
-  test = (dlModuleTestFn) dlsym (handle[0], "test");
+  test = (dlModuleTestFn)dlsym(handle[0], "test");
   if (test == 0) {
       fprintf(stderr, "dlsym(handle[0],\"test\"): symbol not found\n");
       return 1;
@@ -398,7 +418,8 @@ int test_three ()
 
   handle[1] = try_open("dltwo.a", "libs/dltwo.so", "dltwo.so");
   if (handle[1] == 0) {
-      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n", dlerror ());
+      fprintf(stderr, "dlopen(\"dltwo.so\",FLAGS) failed: %s\n",
+              dlerror());
       return 1;
   }
   test = (dlModuleTestFn)dlsym(handle[1], "test");
@@ -420,17 +441,17 @@ int test_three ()
   return 0;
 }
 
-int main (int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	if (argc == 1) {
 		return test_one();
 	}
 
-	if (strcmp (argv[1], "-3") == 0) {
+	if (strcmp(argv[1], "-3") == 0) {
 		return test_three();
 	}
 
-	if (strcmp (argv[1], "-2") == 0) {
+	if (strcmp(argv[1], "-2") == 0) {
 		return test_two();
 	}
 
