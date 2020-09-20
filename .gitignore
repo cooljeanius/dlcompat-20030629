@@ -10,7 +10,7 @@ conf*/*.awk
 *.o
 lib*.a
 Makefile
-Makefile.orig
+Makefile*orig
 *(Autosaved)*
 *.dylib
 dlopen.3
@@ -30,3 +30,5 @@ stamp-*
 *.build
 build/*
 dlcompat-*.*.*/*
+*.xcworkspace
+*.xcodeproj/xcuserdata/*
