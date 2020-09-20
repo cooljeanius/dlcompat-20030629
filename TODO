@@ -11,3 +11,5 @@ TODO:
 - Use the routine image_for_address (?)
 - Use AvailabilityMacros to check for OS X version, and replace deprecated
   functions conditionally based on OS X version.
+- Find out when SenTestingKit.framework was removed from Xcode, and port it
+  to newer versions of macOS

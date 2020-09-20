@@ -52,6 +52,8 @@
 # if !defined(_dyld_func_lookup) && !defined(HAVE__DYLD_FUNC_LOOKUP)
 /* prototype: */
 extern int _dyld_func_lookup(const char* dyld_func_name, void **address);
+/* TODO: move this prototype to a header
+ * (newer versions of <mach-o/dyld.h> no longer have it there) */
 # endif /* (!_dyld_func_lookup && !HAVE__DYLD_FUNC_LOOKUP) */
 #endif /* (HAVE_MACH_O_DYLD_H || __APPLE__) */
 

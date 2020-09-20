@@ -88,4 +88,8 @@ int main(int argc, const char* argv[])
 	return retCode;
 }
 
+#ifdef __BSD_VISIBLE
+# undef __BSD_VISIBLE
+#endif /* __BSD_VISIBLE */
+
 /* EOF */
