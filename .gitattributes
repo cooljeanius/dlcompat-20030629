@@ -5,3 +5,4 @@ build-aux/config.sub linguist-vendored
 build-aux/depcomp linguist-vendored
 build-aux/install-sh linguist-vendored
 build-aux/missing linguist-vendored
+ChangeLog    merge=cl-merge
