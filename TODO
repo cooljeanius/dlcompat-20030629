@@ -13,3 +13,6 @@ TODO:
   functions conditionally based on OS X version.
 - Find out when SenTestingKit.framework was removed from Xcode, and port it
   to newer versions of macOS
+
+(note: the contents of this file have been migrated to GitHub issues, but
+are preserved here anyways in case GitHub becomes inaccessible or something)
